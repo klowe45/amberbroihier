@@ -1,0 +1,25 @@
+.edit-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.edit-mode-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.edit-mode-toggle.active {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.edit-mode-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40, 53, 31, 0.25);
+}

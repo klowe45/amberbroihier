@@ -46,3 +46,56 @@
   font-size: 0.9rem;
   margin-bottom: 1rem;
 }
+
+/* Password field with an eye toggle. Wraps the input so the icon
+   sits absolutely inside it, without interfering with the input's
+   own focus ring. */
+.password-wrap {
+  position: relative;
+}
+.password-wrap input {
+  padding-right: 2.75rem;
+}
+.password-toggle {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.4rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: color 120ms ease, background 120ms ease;
+}
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--accent);
+  background: rgba(40, 53, 31, 0.06);
+  outline: none;
+}
+
+/* Remember-me row: checkbox + label in one horizontal line. */
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.remember-me input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.remember-me span {
+  line-height: 1;
+}

@@ -1,0 +1,101 @@
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 24, 18, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: confirm-fade 120ms ease-out;
+}
+
+.confirm-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.75rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  animation: confirm-rise 140ms ease-out;
+}
+
+.confirm-title {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  margin: 0 0 0.5rem;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.confirm-message {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.confirm-btn {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--bg);
+  border: 1px solid var(--accent);
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.confirm-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.confirm-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40, 53, 31, 0.25);
+}
+
+.confirm-btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.confirm-btn-ghost:hover {
+  background: var(--bg-alt);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.confirm-btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+.confirm-btn-danger:hover {
+  background: #862828;
+  border-color: #862828;
+}
+
+@keyframes confirm-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes confirm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

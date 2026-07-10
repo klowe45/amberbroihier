@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../lib/api.js'
+import { useConfirm } from '../../lib/ConfirmContext.jsx'
 
 const STATUS_OPTIONS = ['new', 'replied', 'booked', 'declined']
 
 export default function BookingInbox() {
+  const confirm = useConfirm()
   const [bookings, setBookings] = useState([])
   const [expanded, setExpanded] = useState(null)
   const [status, setStatus] = useState('')
@@ -29,8 +31,14 @@ export default function BookingInbox() {
     }
   }
 
-  const onDelete = async (id) => {
-    if (!window.confirm('Delete this inquiry?')) return
+  const onDelete = async (id, name) => {
+    const ok = await confirm({
+      title: `Delete inquiry from ${name}?`,
+      message: 'The inquiry will be removed from the inbox. Any email already sent stays in Amber’s Gmail.',
+      confirmLabel: 'Delete inquiry',
+      danger: true,
+    })
+    if (!ok) return
     await api.del(`/api/bookings/${id}`)
     load()
   }
@@ -42,8 +50,8 @@ export default function BookingInbox() {
   return (
     <div>
       <div className="save-row" style={{ marginBottom: '1rem' }}>
-        <span className="save-status">
-          {bookings.length} inquir{bookings.length === 1 ? 'y' : 'ies'}. {status}
+        <span className="inbox-count">
+          {bookings.length} inquir{bookings.length === 1 ? 'y' : 'ies'}
         </span>
       </div>
       <ul className="admin-list">
@@ -105,7 +113,7 @@ export default function BookingInbox() {
                   </button>
                   <button
                     className="text-btn danger"
-                    onClick={() => onDelete(b.id)}
+                    onClick={() => onDelete(b.id, b.name)}
                   >
                     Delete
                   </button>

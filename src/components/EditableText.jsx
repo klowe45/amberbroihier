@@ -16,6 +16,15 @@ import './EditableText.css'
 //   multiline   — use a <textarea> instead of a single-line <input>
 //   placeholder — placeholder shown when the value is empty
 //   className   — extra classes for the display element
+//   enabled     — override for whether the edit affordance shows.
+//                 Defaults to true, so admin-hover-edit is the norm.
+//                 The nav uses this: nav items pass `enabled={navEditMode}`
+//                 so labels are only editable while Amber has flipped
+//                 on the nav edit toggle.
+//   pencil      — whether to render the inline ✎ icon. Set false when
+//                 the wrapping element already carries a strong visual
+//                 (a .btn, for example) and a pencil-inside-a-button
+//                 looks noisy.
 export default function EditableText({
   field,
   value,
@@ -23,6 +32,8 @@ export default function EditableText({
   multiline = false,
   placeholder,
   className = '',
+  enabled = true,
+  pencil = true,
 }) {
   const { isAdmin } = useAuth()
   const { pending, set } = useEdit()
@@ -35,20 +46,18 @@ export default function EditableText({
 
   useEffect(() => {
     if (!editing) return
-    // Autofocus + select on entering edit mode.
+    // Autofocus + select on entering edit mode. Also size the textarea
+    // to fit the current draft so single-line entry starts at one line
+    // and multi-line paragraphs open at their real height.
     const el = inputRef.current
     if (!el) return
     el.focus()
     el.select?.()
-    if (multiline) {
-      // Grow the textarea to fit the incoming text; keeps entry from
-      // feeling cramped when the field is a paragraph.
-      el.style.height = 'auto'
-      el.style.height = `${el.scrollHeight}px`
-    }
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
   }, [editing, multiline])
 
-  if (!isAdmin) {
+  if (!isAdmin || !enabled) {
     return <Tag className={className}>{displayed || placeholder}</Tag>
   }
 
@@ -88,25 +97,29 @@ export default function EditableText({
   }
 
   if (editing) {
-    const commonProps = {
-      ref: inputRef,
-      value: draft,
-      onChange: (e) => {
-        setDraft(e.target.value)
-        if (multiline) {
+    // Always render a textarea (even for single-line fields) so long
+    // text wraps into the visible box instead of scrolling horizontally
+    // and hiding the start. Auto-grows to fit content on every change.
+    return (
+      <textarea
+        ref={inputRef}
+        rows={multiline ? 3 : 1}
+        value={draft}
+        onChange={(e) => {
+          const nextVal = multiline
+            ? e.target.value
+            : e.target.value.replace(/\n+/g, ' ')
+          setDraft(nextVal)
+          // Auto-grow height to fit the new content. `auto` first so
+          // the textarea can shrink if the user deletes lines.
           e.target.style.height = 'auto'
           e.target.style.height = `${e.target.scrollHeight}px`
-        }
-      },
-      onBlur: commit,
-      onKeyDown,
-      className: 'editable-input',
-      placeholder,
-    }
-    return multiline ? (
-      <textarea rows={3} {...commonProps} />
-    ) : (
-      <input type="text" {...commonProps} />
+        }}
+        onBlur={commit}
+        onKeyDown={onKeyDown}
+        className={`editable-input ${multiline ? '' : 'editable-input-single'}`}
+        placeholder={placeholder}
+      />
     )
   }
 
@@ -116,16 +129,26 @@ export default function EditableText({
       tabIndex={0}
       role="button"
       aria-label={`Edit ${field}`}
-      onClick={startEditing}
+      // stopPropagation so wrapping <Link>/<NavLink>/<a> ancestors
+      // (nav items, mailto links, home CTA buttons) don't navigate
+      // while Amber is trying to edit their label.
+      onClick={(e) => {
+        e.stopPropagation()
+        e.preventDefault()
+        startEditing()
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
+          e.stopPropagation()
           startEditing()
         }
       }}
     >
       {displayed || <span className="editable-empty">{placeholder}</span>}
-      <span className="editable-pencil" aria-hidden="true">✎</span>
+      {pencil && (
+        <span className="editable-pencil" aria-hidden="true">✎</span>
+      )}
     </Tag>
   )
 }

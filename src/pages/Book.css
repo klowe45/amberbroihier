@@ -1,0 +1,19 @@
+.book {
+  padding: 3rem 1.5rem 5rem;
+}
+
+.book-intro {
+  max-width: var(--max-prose);
+  margin: 0 0 2.5rem;
+}
+
+.book-lede {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.book-email-line {
+  color: var(--text-muted);
+  margin-bottom: 0;
+}

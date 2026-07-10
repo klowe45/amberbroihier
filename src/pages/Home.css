@@ -22,6 +22,71 @@
   flex-wrap: wrap;
 }
 
+/* Featured video block sits under the CTAs. The frame keeps its
+   16:9 aspect ratio via aspect-ratio, and the iframe fills it. */
+.home-video {
+  margin-top: 3rem;
+  max-width: 720px;
+}
+.home-video-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+}
+.home-video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.home-video-caption {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Admin-only picker below the video. Uses the site's neutral form
+   styling; the select behaves like any labeled field. */
+.home-video-picker {
+  margin-top: 2rem;
+  max-width: 420px;
+  padding: 1rem 1.25rem;
+  background: var(--bg-alt);
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+}
+.home-video-picker label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.home-video-picker-label {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+.home-video-picker select {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+.home-video-picker select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.home-video-picker-help {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 640px) {
   .home {
     padding: 2rem 1.5rem 4rem;

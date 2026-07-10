@@ -14,12 +14,47 @@ const EditContext = createContext({
   cancel: () => {},
 })
 
+// localStorage key for the pending-edits buffer. Namespaced under the
+// same `ab-draft:` prefix as useDraft so every persisted-draft-thing
+// lives in one bucket, easy to eyeball or wipe if needed.
+const PENDING_STORAGE_KEY = 'ab-draft:inline-edits'
+
+function loadPending() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(PENDING_STORAGE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
 export function EditProvider({ children }) {
-  const [pending, setPending] = useState({})
+  // Initialize from localStorage so a refresh doesn't discard Amber's
+  // in-progress inline edits. Nothing gets published to the DB until
+  // she hits Publish — the persistence is purely a "don't lose typing"
+  // safety net.
+  const [pending, setPending] = useState(loadPending)
   const [publishing, setPublishing] = useState(false)
   // Bumped after every successful publish; useSiteContent subscribes
   // to it so it re-fetches without needing a full page reload.
   const [publishTick, setPublishTick] = useState(0)
+
+  // Sync pending → localStorage on every change. Empty map removes
+  // the key entirely so we don't leave a stale `{}` around.
+  useEffect(() => {
+    try {
+      if (Object.keys(pending).length) {
+        window.localStorage.setItem(PENDING_STORAGE_KEY, JSON.stringify(pending))
+      } else {
+        window.localStorage.removeItem(PENDING_STORAGE_KEY)
+      }
+    } catch {
+      // ignore — private mode / quota exceeded / etc.
+    }
+  }, [pending])
 
   const set = useCallback((key, value) => {
     setPending((prev) => {

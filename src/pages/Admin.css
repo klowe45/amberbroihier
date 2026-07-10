@@ -101,6 +101,26 @@
   font-family: var(--sans);
 }
 
+/* Helper text below a form field — the URL preview under the slug
+   input, for example. Uses the muted color so it fades behind the
+   field's primary state. */
+.field-help {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.field-help code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  padding: 1px 5px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text);
+}
+
 /* Quill editor for the blog body. The Snow theme ships with its own
    toolbar + border styling; we override the palette so it fits our
    warm neutral scheme instead of shipping the default blue-grey. */
@@ -149,6 +169,7 @@
 }
 
 .status-pill {
+  display: flex;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -156,6 +177,12 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text-muted);
+  text-align: center;
+  /* Keep Draft/Published the same width so the Edit + Delete buttons
+     line up between rows in the admin list. */
+  min-width: 6.5em;
+  justify-content: center;
+  align-items: center;
 }
 .status-pill.published {
   border-color: var(--accent);
@@ -170,6 +197,11 @@
 }
 
 .save-status {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.inbox-count {
   font-size: 0.9rem;
   color: var(--text-muted);
 }

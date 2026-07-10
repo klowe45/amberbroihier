@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
+import { useConfirm } from '../../lib/ConfirmContext.jsx'
 
 const BLANK = {
   title: '',
@@ -8,10 +9,56 @@ const BLANK = {
   display_order: 0,
 }
 
-export default function VideoManager() {
+// Same pattern as BlogManager: single-slot localStorage draft, restored
+// on mount, cleared on save or explicit cancel.
+const DRAFT_KEY = 'ab-draft:video-editing'
+function loadVideoDraft() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+function clearVideoDraft() {
+  try {
+    window.localStorage.removeItem(DRAFT_KEY)
+  } catch {
+    // ignore
+  }
+}
+
+// Extract the host label ("youtube.com", "vimeo.com") for the list row.
+// Falls back to a friendly '—' if the URL is missing or malformed
+// rather than crashing when Amber pastes something odd.
+function urlHost(url) {
+  if (!url) return '—'
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return '—'
+  }
+}
+
+export default function VideoManager({ initialEditId = null }) {
+  const confirm = useConfirm()
   const [videos, setVideos] = useState([])
-  const [editing, setEditing] = useState(null)
+  const [editing, setEditing] = useState(loadVideoDraft)
   const [status, setStatus] = useState('')
+  // Track whether we've already honored the initialEditId intent, so
+  // going back to the list and forward again doesn't re-open the form.
+  const initialIntentHandled = useRef(false)
+
+  useEffect(() => {
+    if (editing) {
+      try {
+        window.localStorage.setItem(DRAFT_KEY, JSON.stringify(editing))
+      } catch {
+        // ignore
+      }
+    }
+  }, [editing])
 
   const load = () =>
     api
@@ -23,6 +70,19 @@ export default function VideoManager() {
     load()
   }, [])
 
+  // When routed here from the Speaking page's Edit button, open the
+  // requested video's form as soon as the video list arrives.
+  useEffect(() => {
+    if (initialIntentHandled.current) return
+    if (!initialEditId) return
+    if (!videos.length) return
+    const target = videos.find((v) => v.id === initialEditId)
+    if (target) {
+      setEditing(target)
+      initialIntentHandled.current = true
+    }
+  }, [initialEditId, videos])
+
   const onSave = async (e) => {
     e.preventDefault()
     setStatus('Saving…')
@@ -33,6 +93,7 @@ export default function VideoManager() {
         await api.post('/api/videos', editing)
       }
       setStatus('Saved.')
+      clearVideoDraft()
       setEditing(null)
       load()
     } catch (err) {
@@ -40,8 +101,14 @@ export default function VideoManager() {
     }
   }
 
-  const onDelete = async (id) => {
-    if (!window.confirm('Remove this video?')) return
+  const onDelete = async (id, title) => {
+    const ok = await confirm({
+      title: `Remove "${title}"?`,
+      message: 'The video embed will disappear from the Speaking page.',
+      confirmLabel: 'Remove video',
+      danger: true,
+    })
+    if (!ok) return
     await api.del(`/api/videos/${id}`)
     load()
   }
@@ -59,7 +126,7 @@ export default function VideoManager() {
           />
         </label>
         <label className="field">
-          <span>YouTube / Vimeo URL</span>
+          <span>Video URL</span>
           <input
             type="url"
             required
@@ -80,19 +147,6 @@ export default function VideoManager() {
             }
           />
         </label>
-        <label className="field">
-          <span>Display order (lower = shown first)</span>
-          <input
-            type="number"
-            value={editing.display_order ?? 0}
-            onChange={(e) =>
-              setEditing({
-                ...editing,
-                display_order: Number(e.target.value),
-              })
-            }
-          />
-        </label>
         <div className="save-row">
           <button type="submit" className="btn">
             {editing.id ? 'Save' : 'Add video'}
@@ -100,14 +154,22 @@ export default function VideoManager() {
           <button
             type="button"
             className="text-btn"
-            onClick={() => {
+            onClick={async () => {
+              const ok = await confirm({
+                title: 'Discard this video?',
+                message: 'Any unsaved changes will be lost.',
+                confirmLabel: 'Discard',
+                cancelLabel: 'Keep editing',
+                danger: true,
+              })
+              if (!ok) return
+              clearVideoDraft()
               setEditing(null)
               setStatus('')
             }}
           >
             Cancel
           </button>
-          <span className="save-status">{status}</span>
         </div>
       </form>
     )
@@ -119,7 +181,6 @@ export default function VideoManager() {
         <button className="btn" onClick={() => setEditing({ ...BLANK })}>
           Add video
         </button>
-        <span className="save-status">{status}</span>
       </div>
       {videos.length === 0 ? (
         <p style={{ color: 'var(--text-muted)' }}>No videos yet.</p>
@@ -128,14 +189,14 @@ export default function VideoManager() {
           {videos.map((v) => (
             <li key={v.id}>
               <div className="row-title">{v.title}</div>
-              <div className="row-meta">order: {v.display_order ?? 0}</div>
+              <div className="row-meta">{urlHost(v.embed_url)}</div>
               <div className="row-actions">
                 <button className="text-btn" onClick={() => setEditing(v)}>
                   Edit
                 </button>
                 <button
                   className="text-btn danger"
-                  onClick={() => onDelete(v.id)}
+                  onClick={() => onDelete(v.id, v.title)}
                 >
                   Delete
                 </button>

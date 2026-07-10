@@ -51,6 +51,14 @@
   color: var(--text-muted);
   margin: 0;
   font-size: 1.05rem;
+  /* Truncate long fallbacks (stripped body text) to a clean 3-line
+     teaser. Amber's hand-written summaries stay untouched if they
+     fit; if they don't, they clamp too, which is the desired
+     consistency. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .post {

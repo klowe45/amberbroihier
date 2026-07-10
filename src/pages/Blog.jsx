@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
+import { useSiteContent } from '../lib/useSiteContent.js'
+import EditableText from '../components/EditableText.jsx'
 import './Blog.css'
 
+const FALLBACK = {
+  blog_eyebrow: 'Writing',
+  blog_headline: 'Essays, notes, and thinking-out-loud',
+}
+
 export default function Blog() {
+  const { content } = useSiteContent(FALLBACK)
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -18,8 +26,12 @@ export default function Blog() {
   return (
     <div className="container blog">
       <div className="blog-header">
-        <p className="eyebrow">Writing</p>
-        <h1>Essays, notes, and thinking-out-loud</h1>
+        <p className="eyebrow">
+          <EditableText field="blog_eyebrow" value={content.blog_eyebrow} />
+        </p>
+        <h1>
+          <EditableText field="blog_headline" value={content.blog_headline} />
+        </h1>
       </div>
 
       {loading ? (

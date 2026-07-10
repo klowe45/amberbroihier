@@ -52,7 +52,9 @@
 }
 
 /* Input mode — matches the surrounding typography so the swap doesn't
-   jump. Inherits font/size/color from the parent context. */
+   jump. Always a textarea internally (even for logically-single-line
+   fields) so long text wraps into a growing box instead of scrolling
+   horizontally and hiding the first characters. */
 .editable-input {
   font: inherit;
   color: inherit;
@@ -66,8 +68,16 @@
   resize: none;
   overflow: hidden;
   line-height: inherit;
+  display: block;
+  vertical-align: middle;
+  min-height: 1em;
 }
 .editable-input:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(40, 53, 31, 0.15);
+}
+/* Single-line editables strip their scrollbar so it never briefly
+   flickers into view while the auto-grow is calculating scrollHeight. */
+.editable-input-single {
+  overflow-y: hidden;
 }

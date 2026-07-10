@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../lib/api.js'
+import { useDraft } from '../lib/useDraft.js'
 import './BookingForm.css'
 
 const BLANK = {
@@ -15,7 +16,10 @@ const BLANK = {
 }
 
 export default function BookingForm() {
-  const [values, setValues] = useState(BLANK)
+  // Draft-persisted: if a visitor accidentally refreshes or closes
+  // the tab, coming back to /speaking restores their in-progress
+  // inquiry from localStorage.
+  const [values, setValues, clearDraft] = useDraft('booking-form', BLANK)
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState(null)
 
@@ -33,7 +37,7 @@ export default function BookingForm() {
         text:
           'Thank you — your note is on its way to Amber. Expect a reply within a few business days.',
       })
-      setValues(BLANK)
+      clearDraft()
     } catch (err) {
       setStatus({ kind: 'error', text: err.message })
     } finally {

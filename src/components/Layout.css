@@ -44,6 +44,15 @@
   flex-wrap: wrap;
 }
 
+/* Desktop: pull the edit toggle to the leftmost slot in the nav so
+   it reads as "unlock the labels beside me". On mobile (max-width
+   below) we drop this override and the toggle flows after Admin. */
+@media (min-width: 641px) {
+  .nav .edit-mode-toggle {
+    order: -1;
+  }
+}
+
 .nav a {
   color: var(--text);
   font-size: 0.95rem;
@@ -54,6 +63,37 @@
 .nav a.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
+}
+
+/* Left group in the header: brand + primary CTA sit together so the
+   CTA is always adjacent to the name and stays visible even when
+   the right-hand nav wraps on narrow screens. */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Solid-fill CTA — Book Amber. Selector isn't scoped to .nav so the
+   same styling applies wherever we drop the button (currently next
+   to the brand). */
+.nav-cta {
+  background: var(--accent);
+  color: var(--bg);
+  padding: 0.4rem 0.9rem;
+  border-radius: 2px;
+  border-bottom: 1px solid var(--accent);
+  letter-spacing: 0.03em;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.nav-cta:hover,
+.nav-cta.active {
+  background: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+  color: var(--bg);
 }
 
 .link-btn {
@@ -70,12 +110,23 @@
 
 .site-main {
   flex: 1;
-  padding: 0 0 4rem;
+  /* Extra bottom padding so page content doesn't hide behind the
+     fixed footer. Roughly matches the footer's own height + a small
+     buffer; the bump on the mobile breakpoint below accounts for the
+     footer wrapping onto two lines. */
+  padding: 0 0 4.5rem;
 }
 
 .site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  /* Sits above page content but below the sticky header (z:10) and
+     the admin edit bar (z:20) so those keep priority visually. */
+  z-index: 5;
   border-top: 1px solid var(--border);
-  padding: 1.5rem 0;
+  padding: 0.6rem 0;
   background: var(--bg-alt);
   color: var(--text-muted);
   font-size: 0.9rem;
@@ -108,7 +159,18 @@
     align-items: flex-start;
     gap: 0.75rem;
   }
+  /* Push the Book Amber CTA to the far edge of the header row so
+     the brand + primary action anchor opposite sides on phones. */
+  .header-left {
+    width: 100%;
+    justify-content: space-between;
+  }
   .nav {
     gap: 1.1rem;
+  }
+  /* Footer content wraps to two rows on narrow screens, so give the
+     main area more bottom clearance to keep content from hiding. */
+  .site-main {
+    padding-bottom: 6.5rem;
   }
 }
