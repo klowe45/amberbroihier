@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useSiteContent } from '../lib/useSiteContent.js'
+import EditableText from '../components/EditableText.jsx'
 import './Home.css'
 
 const FALLBACK = {
@@ -16,15 +17,31 @@ export default function Home() {
 
   return (
     <div className="container home">
-      <p className="eyebrow">{content.home_eyebrow}</p>
-      <h1 className="home-headline">{content.home_headline}</h1>
-      <p className="home-lede">{content.home_lede}</p>
+      <p className="eyebrow">
+        <EditableText field="home_eyebrow" value={content.home_eyebrow} />
+      </p>
+      <h1 className="home-headline">
+        <EditableText field="home_headline" value={content.home_headline} />
+      </h1>
+      <p className="home-lede">
+        <EditableText
+          field="home_lede"
+          value={content.home_lede}
+          multiline
+        />
+      </p>
       <div className="home-actions">
         <Link to="/speaking" className="btn">
-          {content.home_cta_primary}
+          <EditableText
+            field="home_cta_primary"
+            value={content.home_cta_primary}
+          />
         </Link>
         <Link to="/blog" className="btn btn-ghost">
-          {content.home_cta_secondary}
+          <EditableText
+            field="home_cta_secondary"
+            value={content.home_cta_secondary}
+          />
         </Link>
       </div>
     </div>

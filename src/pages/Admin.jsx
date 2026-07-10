@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useAuth } from '../lib/AuthContext.jsx'
 import ContentEditor from './admin/ContentEditor.jsx'
 import BlogManager from './admin/BlogManager.jsx'
 import VideoManager from './admin/VideoManager.jsx'
@@ -14,17 +13,14 @@ const TABS = [
 ]
 
 export default function Admin() {
-  const { user } = useAuth()
   const [tab, setTab] = useState('bookings')
 
   return (
     <div className="container admin">
       <header className="admin-header">
         <p className="eyebrow">Admin</p>
-        <h1>Welcome back{user?.email ? `, ${user.email}` : ''}.</h1>
-        <p className="admin-lede">
-          Read inquiries, edit site copy, publish writing, and update your talks.
-        </p>
+        <h1>Welcome back, Amber</h1>
+        <p className="admin-subtitle">Kenneth Loves You!</p>
       </header>
 
       <nav className="admin-tabs" aria-label="Admin sections">

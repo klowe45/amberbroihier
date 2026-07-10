@@ -20,6 +20,9 @@
   padding-top: 1.1rem;
   padding-bottom: 1.1rem;
   gap: 2rem;
+  /* Override the `.container` max-width so the header spans the
+     full viewport instead of being capped at 1080px. */
+  max-width: none;
 }
 
 .brand {
@@ -67,7 +70,7 @@
 
 .site-main {
   flex: 1;
-  padding: 3rem 0 4rem;
+  padding: 0 0 4rem;
 }
 
 .site-footer {
@@ -84,6 +87,8 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.75rem;
+  /* Same override — footer spans full viewport too. */
+  max-width: none;
 }
 
 .site-footer p {

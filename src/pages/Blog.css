@@ -61,7 +61,47 @@
   font-size: 1.15rem;
   line-height: 1.75;
   color: var(--text);
-  white-space: pre-wrap;
+}
+
+.post-body p {
+  margin: 0 0 1.4em;
+}
+
+.post-body h1,
+.post-body h2,
+.post-body h3 {
+  font-family: var(--serif);
+  color: var(--text);
+  line-height: 1.2;
+  margin: 2em 0 0.5em;
+}
+.post-body h1 { font-size: 1.9rem; }
+.post-body h2 { font-size: 1.55rem; }
+.post-body h3 { font-size: 1.25rem; }
+
+.post-body ul,
+.post-body ol {
+  padding-left: 1.5em;
+  margin: 0 0 1.4em;
+}
+.post-body li {
+  margin-bottom: 0.5em;
+}
+
+.post-body blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.2em 0 0.2em 1.2em;
+  margin: 1.6em 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.post-body a {
+  color: var(--accent);
+  border-bottom: 1px solid rgba(40, 53, 31, 0.3);
+}
+.post-body a:hover {
+  border-bottom-color: var(--accent);
 }
 
 .post-date {

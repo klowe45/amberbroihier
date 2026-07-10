@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../lib/api.js'
 import { useSiteContent } from '../lib/useSiteContent.js'
 import BookingForm from '../components/BookingForm.jsx'
+import EditableText from '../components/EditableText.jsx'
 import './Speaking.css'
 
 const FALLBACK = {
@@ -26,8 +27,19 @@ export default function Speaking() {
     <div className="container speaking">
       <div className="speaking-intro">
         <p className="eyebrow">Speaking</p>
-        <h1>{content.speaking_headline}</h1>
-        <p className="speaking-lede">{content.speaking_lede}</p>
+        <h1>
+          <EditableText
+            field="speaking_headline"
+            value={content.speaking_headline}
+          />
+        </h1>
+        <p className="speaking-lede">
+          <EditableText
+            field="speaking_lede"
+            value={content.speaking_lede}
+            multiline
+          />
+        </p>
       </div>
 
       {videos.length > 0 && (

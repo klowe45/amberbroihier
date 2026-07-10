@@ -1,4 +1,5 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
+import EditableText from '../components/EditableText.jsx'
 import './About.css'
 
 const FALLBACK = {
@@ -18,10 +19,18 @@ export default function About() {
     <div className="container about">
       <div className="prose">
         <p className="eyebrow">About</p>
-        <h1>{content.about_headline}</h1>
-        <p>{content.about_p1}</p>
-        <p>{content.about_p2}</p>
-        <p>{content.about_p3}</p>
+        <h1>
+          <EditableText field="about_headline" value={content.about_headline} />
+        </h1>
+        <p>
+          <EditableText field="about_p1" value={content.about_p1} multiline />
+        </p>
+        <p>
+          <EditableText field="about_p2" value={content.about_p2} multiline />
+        </p>
+        <p>
+          <EditableText field="about_p3" value={content.about_p3} multiline />
+        </p>
       </div>
     </div>
   )

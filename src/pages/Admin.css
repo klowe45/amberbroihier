@@ -8,6 +8,13 @@
 .admin-lede {
   color: var(--text-muted);
 }
+.admin-subtitle {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--accent);
+  margin: 0;
+}
 
 .admin-tabs {
   display: flex;
@@ -92,6 +99,53 @@
 .admin-form textarea {
   min-height: 220px;
   font-family: var(--sans);
+}
+
+/* Quill editor for the blog body. The Snow theme ships with its own
+   toolbar + border styling; we override the palette so it fits our
+   warm neutral scheme instead of shipping the default blue-grey. */
+.quill-wrapper .ql-toolbar,
+.quill-wrapper .ql-container {
+  border-color: var(--border);
+  background: var(--bg);
+}
+.quill-wrapper .ql-toolbar {
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+}
+.quill-wrapper .ql-container {
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+  font-family: var(--sans);
+  font-size: 1rem;
+  min-height: 320px;
+}
+.quill-wrapper .ql-editor {
+  min-height: 320px;
+  color: var(--text);
+  line-height: 1.65;
+}
+.quill-wrapper .ql-editor.ql-blank::before {
+  color: var(--text-muted);
+  font-style: normal;
+}
+.quill-wrapper .ql-toolbar .ql-stroke {
+  stroke: var(--text);
+}
+.quill-wrapper .ql-toolbar .ql-fill {
+  fill: var(--text);
+}
+.quill-wrapper .ql-toolbar button:hover .ql-stroke,
+.quill-wrapper .ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--accent);
+}
+.quill-wrapper .ql-toolbar button:hover .ql-fill,
+.quill-wrapper .ql-toolbar button.ql-active .ql-fill {
+  fill: var(--accent);
+}
+.quill-wrapper .ql-toolbar .ql-picker-label:hover,
+.quill-wrapper .ql-toolbar .ql-picker-label.ql-active {
+  color: var(--accent);
 }
 
 .status-pill {

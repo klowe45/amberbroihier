@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext.jsx'
+import { EditProvider } from './lib/EditContext.jsx'
 import Layout from './components/Layout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Home from './pages/Home.jsx'
@@ -14,6 +15,7 @@ import NotFound from './pages/NotFound.jsx'
 function App() {
   return (
     <AuthProvider>
+      <EditProvider>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
@@ -33,6 +35,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
+      </EditProvider>
     </AuthProvider>
   )
 }

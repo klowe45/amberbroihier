@@ -1,0 +1,60 @@
+.edit-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--accent);
+  color: var(--bg);
+  border-bottom: 1px solid var(--accent-hover);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.edit-bar-inner {
+  max-width: none;
+  padding: 0.6rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.edit-bar-count {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.edit-bar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-bar-btn {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.4rem 1rem;
+  background: var(--bg);
+  color: var(--accent);
+  border: 1px solid var(--bg);
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transition: background 120ms ease, color 120ms ease;
+}
+.edit-bar-btn:hover:not(:disabled) {
+  background: transparent;
+  color: var(--bg);
+}
+.edit-bar-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.edit-bar-btn-ghost {
+  background: transparent;
+  color: var(--bg);
+  border-color: rgba(250, 247, 242, 0.5);
+}
+.edit-bar-btn-ghost:hover:not(:disabled) {
+  background: rgba(250, 247, 242, 0.15);
+  color: var(--bg);
+}

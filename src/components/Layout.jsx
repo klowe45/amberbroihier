@@ -1,5 +1,6 @@
 import { NavLink, Outlet, Link } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext.jsx'
+import EditBar from './EditBar.jsx'
 import './Layout.css'
 
 export default function Layout() {
@@ -7,6 +8,7 @@ export default function Layout() {
 
   return (
     <div className="site">
+      <EditBar />
       <header className="site-header">
         <div className="container site-header-inner">
           <Link to="/" className="brand">

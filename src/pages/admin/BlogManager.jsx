@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import ReactQuill from 'react-quill-new'
+import 'react-quill-new/dist/quill.snow.css'
 import { api } from '../../lib/api.js'
+import { quillModules, quillFormats } from '../../lib/quill.js'
 
 const BLANK = {
   slug: '',
@@ -85,14 +88,16 @@ export default function BlogManager() {
         </label>
         <label className="field">
           <span>Body</span>
-          <textarea
-            required
-            rows={16}
-            value={editing.body ?? ''}
-            onChange={(e) =>
-              setEditing({ ...editing, body: e.target.value })
-            }
-          />
+          <div className="quill-wrapper">
+            <ReactQuill
+              theme="snow"
+              value={editing.body ?? ''}
+              onChange={(html) => setEditing({ ...editing, body: html })}
+              modules={quillModules}
+              formats={quillFormats}
+              placeholder="Write the post…"
+            />
+          </div>
         </label>
         <label
           className="field"
