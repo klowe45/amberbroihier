@@ -65,36 +65,6 @@
   border-bottom-color: var(--accent);
 }
 
-/* Left group in the header: brand + primary CTA sit together so the
-   CTA is always adjacent to the name and stays visible even when
-   the right-hand nav wraps on narrow screens. */
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-/* Solid-fill CTA — Book Amber. Selector isn't scoped to .nav so the
-   same styling applies wherever we drop the button (currently next
-   to the brand). */
-.nav-cta {
-  background: var(--accent);
-  color: var(--bg);
-  padding: 0.4rem 0.9rem;
-  border-radius: 2px;
-  border-bottom: 1px solid var(--accent);
-  letter-spacing: 0.03em;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  transition: background 120ms ease, border-color 120ms ease;
-}
-.nav-cta:hover,
-.nav-cta.active {
-  background: var(--accent-hover);
-  border-bottom-color: var(--accent-hover);
-  color: var(--bg);
-}
 
 .link-btn {
   background: none;
@@ -158,12 +128,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
-  }
-  /* Push the Book Amber CTA to the far edge of the header row so
-     the brand + primary action anchor opposite sides on phones. */
-  .header-left {
-    width: 100%;
-    justify-content: space-between;
   }
   .nav {
     gap: 1.1rem;

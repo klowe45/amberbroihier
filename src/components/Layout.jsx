@@ -14,7 +14,6 @@ const NAV_FALLBACK = {
   nav_speaking: 'Speaking',
   nav_writing: 'Writing',
   nav_admin: 'Admin',
-  nav_book: 'Book Amber',
   footer_contact_label: 'Contact',
   footer_contact_email: 'hello@amberbroihier.com',
 }
@@ -32,22 +31,9 @@ export default function Layout() {
       <EditBar />
       <header className="site-header">
         <div className="container site-header-inner">
-          <div className="header-left">
-            <Link to="/" className="brand">
-              <EditableText field="brand" value={content.brand} />
-            </Link>
-            {/* Primary CTA lives next to the brand so it reads as
-                "Amber Broihier — Book Amber" and stays visible even
-                when the nav wraps on narrower screens. */}
-            <NavLink to="/book" className="nav-cta">
-              <EditableText
-                field="nav_book"
-                value={content.nav_book}
-                enabled={navEditMode}
-                pencil={false}
-              />
-            </NavLink>
-          </div>
+          <Link to="/" className="brand">
+            <EditableText field="brand" value={content.brand} />
+          </Link>
           <nav className="nav" aria-label="Main">
             <NavLink to="/" end>
               <EditableText

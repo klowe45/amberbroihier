@@ -14,7 +14,6 @@ const FALLBACK = {
   home_headline: 'Ideas worth speaking about.',
   home_lede:
     'Amber Broihier helps audiences connect the dots between story, strategy, and human experience. Book her for your next keynote, panel, or workshop.',
-  home_cta_primary: 'Book Amber',
   home_cta_secondary: 'Read the writing',
   // Featured video shown under the CTAs. Stored as a video UUID
   // (matches videos.id). Empty string = no featured video / hidden.
@@ -61,15 +60,7 @@ export default function Home() {
         />
       </p>
       <div className="home-actions">
-        <Link to="/book" className="btn">
-          <EditableText
-            field="home_cta_primary"
-            value={content.home_cta_primary}
-            enabled={buttonsEditMode}
-            pencil={false}
-          />
-        </Link>
-        <Link to="/blog" className="btn btn-ghost">
+        <Link to="/blog" className="btn">
           <EditableText
             field="home_cta_secondary"
             value={content.home_cta_secondary}
@@ -81,7 +72,7 @@ export default function Home() {
           <EditModeToggle
             active={buttonsEditMode}
             onClick={() => setButtonsEditMode((v) => !v)}
-            label="Edit button labels"
+            label="Edit button label"
           />
         )}
       </div>
