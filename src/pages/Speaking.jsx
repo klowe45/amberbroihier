@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase.js'
+import { api } from '../lib/api.js'
 import { useSiteContent } from '../lib/useSiteContent.js'
+import BookingForm from '../components/BookingForm.jsx'
 import './Speaking.css'
 
 const FALLBACK = {
@@ -15,11 +16,10 @@ export default function Speaking() {
   const [videos, setVideos] = useState([])
 
   useEffect(() => {
-    supabase
-      .from('videos')
-      .select('*')
-      .order('display_order', { ascending: true })
-      .then(({ data }) => setVideos(data ?? []))
+    api
+      .get('/api/videos')
+      .then((data) => setVideos(data ?? []))
+      .catch(() => setVideos([]))
   }, [])
 
   return (
@@ -28,10 +28,6 @@ export default function Speaking() {
         <p className="eyebrow">Speaking</p>
         <h1>{content.speaking_headline}</h1>
         <p className="speaking-lede">{content.speaking_lede}</p>
-        <p>
-          To book Amber, write to{' '}
-          <a href={`mailto:${content.speaking_cta}`}>{content.speaking_cta}</a>.
-        </p>
       </div>
 
       {videos.length > 0 && (
@@ -44,6 +40,16 @@ export default function Speaking() {
           </div>
         </section>
       )}
+
+      <section className="speaking-booking">
+        <h2>Book Amber</h2>
+        <p className="speaking-lede">
+          Send Amber a note about your event. She’ll reply within a few
+          business days. Prefer email? Write to{' '}
+          <a href={`mailto:${content.speaking_cta}`}>{content.speaking_cta}</a>.
+        </p>
+        <BookingForm />
+      </section>
     </div>
   )
 }
@@ -71,9 +77,6 @@ function VideoCard({ video }) {
   )
 }
 
-// Accepts a raw YouTube or Vimeo URL and returns the embed URL.
-// Falls back to whatever the user pasted if the shape isn't recognized —
-// this lets Amber paste iframe src URLs directly if she has them.
 function toEmbedUrl(url) {
   if (!url) return null
   try {

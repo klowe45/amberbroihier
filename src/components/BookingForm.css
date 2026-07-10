@@ -1,0 +1,40 @@
+.booking-form {
+  max-width: 720px;
+  margin-top: 1.5rem;
+}
+
+.booking-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 640px) {
+  .booking-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.booking-status {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  font-size: 0.95rem;
+}
+.booking-status.success {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.booking-status.error {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.honeypot {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

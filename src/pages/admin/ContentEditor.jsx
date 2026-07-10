@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase.js'
+import { api } from '../../lib/api.js'
 
 // Editable copy the site knows about. Adding a new field is a two-step
 // change: read it in the page component via useSiteContent, and add it
@@ -24,14 +24,10 @@ export default function ContentEditor() {
   const [status, setStatus] = useState('')
 
   useEffect(() => {
-    supabase
-      .from('site_content')
-      .select('key, value')
-      .then(({ data }) => {
-        const map = {}
-        for (const row of data ?? []) map[row.key] = row.value
-        setValues(map)
-      })
+    api
+      .get('/api/content')
+      .then((data) => setValues(data ?? {}))
+      .catch(() => setValues({}))
   }, [])
 
   const onChange = (key) => (e) =>
@@ -40,12 +36,14 @@ export default function ContentEditor() {
   const onSave = async (e) => {
     e.preventDefault()
     setStatus('Saving…')
-    const rows = FIELDS.map(({ key }) => ({
-      key,
-      value: values[key] ?? '',
-    }))
-    const { error } = await supabase.from('site_content').upsert(rows)
-    setStatus(error ? `Error: ${error.message}` : 'Saved.')
+    try {
+      await api.put('/api/content', {
+        entries: FIELDS.map(({ key }) => ({ key, value: values[key] ?? '' })),
+      })
+      setStatus('Saved.')
+    } catch (err) {
+      setStatus(`Error: ${err.message}`)
+    }
   }
 
   return (

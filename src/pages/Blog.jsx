@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase.js'
+import { api } from '../lib/api.js'
 import './Blog.css'
 
 export default function Blog() {
@@ -8,15 +8,11 @@ export default function Blog() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase
-      .from('blog_posts')
-      .select('id, slug, title, excerpt, published_at')
-      .eq('published', true)
-      .order('published_at', { ascending: false })
-      .then(({ data }) => {
-        setPosts(data ?? [])
-        setLoading(false)
-      })
+    api
+      .get('/api/posts')
+      .then((data) => setPosts(data ?? []))
+      .catch(() => setPosts([]))
+      .finally(() => setLoading(false))
   }, [])
 
   return (

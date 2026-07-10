@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase.js'
+import { api } from '../../lib/api.js'
 
 const BLANK = {
   slug: '',
@@ -15,12 +15,10 @@ export default function BlogManager() {
   const [status, setStatus] = useState('')
 
   const load = () =>
-    supabase
-      .from('blog_posts')
-      .select('*')
-      .order('published_at', { ascending: false, nullsFirst: false })
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setPosts(data ?? []))
+    api
+      .get('/api/posts')
+      .then((data) => setPosts(data ?? []))
+      .catch(() => setPosts([]))
 
   useEffect(() => {
     load()
@@ -29,30 +27,23 @@ export default function BlogManager() {
   const onSave = async (e) => {
     e.preventDefault()
     setStatus('Saving…')
-    const row = {
-      ...editing,
-      // Set published_at the first time a post flips to published; leave
-      // existing values alone on later edits so the original date sticks.
-      published_at:
-        editing.published && !editing.published_at
-          ? new Date().toISOString()
-          : editing.published_at ?? null,
+    try {
+      if (editing.id) {
+        await api.put(`/api/posts/${editing.id}`, editing)
+      } else {
+        await api.post('/api/posts', editing)
+      }
+      setStatus('Saved.')
+      setEditing(null)
+      load()
+    } catch (err) {
+      setStatus(`Error: ${err.message}`)
     }
-    const { error } = editing.id
-      ? await supabase.from('blog_posts').update(row).eq('id', editing.id)
-      : await supabase.from('blog_posts').insert(row)
-    if (error) {
-      setStatus(`Error: ${error.message}`)
-      return
-    }
-    setStatus('Saved.')
-    setEditing(null)
-    load()
   }
 
   const onDelete = async (id) => {
     if (!window.confirm('Delete this post? This cannot be undone.')) return
-    await supabase.from('blog_posts').delete().eq('id', id)
+    await api.del(`/api/posts/${id}`)
     load()
   }
 
@@ -103,7 +94,10 @@ export default function BlogManager() {
             }
           />
         </label>
-        <label className="field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <label
+          className="field"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
           <input
             type="checkbox"
             style={{ width: 'auto' }}

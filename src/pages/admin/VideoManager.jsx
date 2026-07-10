@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase.js'
+import { api } from '../../lib/api.js'
 
 const BLANK = {
   title: '',
@@ -14,11 +14,10 @@ export default function VideoManager() {
   const [status, setStatus] = useState('')
 
   const load = () =>
-    supabase
-      .from('videos')
-      .select('*')
-      .order('display_order', { ascending: true })
-      .then(({ data }) => setVideos(data ?? []))
+    api
+      .get('/api/videos')
+      .then((data) => setVideos(data ?? []))
+      .catch(() => setVideos([]))
 
   useEffect(() => {
     load()
@@ -27,21 +26,23 @@ export default function VideoManager() {
   const onSave = async (e) => {
     e.preventDefault()
     setStatus('Saving…')
-    const { error } = editing.id
-      ? await supabase.from('videos').update(editing).eq('id', editing.id)
-      : await supabase.from('videos').insert(editing)
-    if (error) {
-      setStatus(`Error: ${error.message}`)
-      return
+    try {
+      if (editing.id) {
+        await api.put(`/api/videos/${editing.id}`, editing)
+      } else {
+        await api.post('/api/videos', editing)
+      }
+      setStatus('Saved.')
+      setEditing(null)
+      load()
+    } catch (err) {
+      setStatus(`Error: ${err.message}`)
     }
-    setStatus('Saved.')
-    setEditing(null)
-    load()
   }
 
   const onDelete = async (id) => {
     if (!window.confirm('Remove this video?')) return
-    await supabase.from('videos').delete().eq('id', id)
+    await api.del(`/api/videos/${id}`)
     load()
   }
 

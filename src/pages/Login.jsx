@@ -17,13 +17,14 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
-    const { error } = await signIn(email, password)
-    setSubmitting(false)
-    if (error) {
-      setError(error.message)
-      return
+    try {
+      await signIn(email, password)
+      navigate('/admin')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
     }
-    navigate('/admin')
   }
 
   return (

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from './supabase.js'
+import { api } from './api.js'
 
 const AuthContext = createContext({
   user: null,
@@ -11,49 +11,50 @@ const AuthContext = createContext({
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // Hydrate on mount: /api/auth/me returns { user } or { user: null }.
+  // Never throws for "logged out", just for network errors.
   useEffect(() => {
     let mounted = true
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return
-      setUser(data.session?.user ?? null)
-      setLoading(false)
-    })
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
+    api
+      .get('/api/auth/me')
+      .then((data) => {
+        if (!mounted) return
+        setUser(data?.user ?? null)
+      })
+      .catch(() => {
+        if (mounted) setUser(null)
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
     return () => {
       mounted = false
-      sub.subscription.unsubscribe()
     }
   }, [])
 
-  useEffect(() => {
-    if (!user) {
-      setIsAdmin(false)
-      return
-    }
-    // Admin check runs against the `admins` table (RLS lets a user
-    // read only their own row). If a row exists, they're admin.
-    supabase
-      .from('admins')
-      .select('user_id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data))
-  }, [user])
+  const signIn = async (email, password) => {
+    const data = await api.post('/api/auth/login', { email, password })
+    setUser(data.user)
+    return { error: null }
+  }
 
-  const signIn = (email, password) =>
-    supabase.auth.signInWithPassword({ email, password })
-  const signOut = () => supabase.auth.signOut()
+  const signOut = async () => {
+    await api.post('/api/auth/logout')
+    setUser(null)
+  }
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, loading, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAdmin: !!user?.isAdmin,
+        loading,
+        signIn,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

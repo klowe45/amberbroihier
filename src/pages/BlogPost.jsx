@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase.js'
+import { api } from '../lib/api.js'
 import './Blog.css'
 
 export default function BlogPost() {
@@ -9,15 +9,14 @@ export default function BlogPost() {
   const [status, setStatus] = useState('loading')
 
   useEffect(() => {
-    supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('slug', slug)
-      .eq('published', true)
-      .maybeSingle()
-      .then(({ data }) => {
+    api
+      .get(`/api/posts/${encodeURIComponent(slug)}`)
+      .then((data) => {
         setPost(data)
-        setStatus(data ? 'ok' : 'not-found')
+        setStatus('ok')
+      })
+      .catch((err) => {
+        setStatus(err.status === 404 ? 'not-found' : 'error')
       })
   }, [slug])
 
@@ -28,6 +27,14 @@ export default function BlogPost() {
     return (
       <div className="container post">
         <p>Post not found.</p>
+        <Link to="/blog" className="post-back">← Back to writing</Link>
+      </div>
+    )
+  }
+  if (status === 'error') {
+    return (
+      <div className="container post">
+        <p>Something went wrong loading this post.</p>
         <Link to="/blog" className="post-back">← Back to writing</Link>
       </div>
     )

@@ -2,41 +2,40 @@
 
 Personal brand + public speaking site for Amber Broihier.
 
-- **Frontend:** Vite + React 19 + hand-written CSS
-- **Backend:** Supabase (Postgres + Auth) — Amber signs in and edits copy, writing, and talks from `/admin`
-- **Deploy:** GitHub Pages at [amberbroihier.com](https://amberbroihier.com) via `gh-pages`
+- **Frontend:** Vite + React 19 + hand-written CSS. Deployed to GitHub Pages at [amberbroihier.com](https://amberbroihier.com) via `gh-pages`.
+- **Backend:** Express + Postgres — [klowe45/amberbroihierBackEnd](https://github.com/klowe45/amberbroihierBackEnd). Deployed on AWS App Runner, Postgres on RDS, SES for booking-inquiry emails.
 
 ## Local development
 
+Both the backend and frontend need to be running.
+
 ```sh
-cp .env.example .env.local   # fill in VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
+# 1. Start the backend (in a separate terminal)
+cd ~/projects/amberbroihierBackEnd
+npm install
+cp .env.example .env    # fill in DATABASE_URL, JWT_SECRET, AWS_REGION, SES_FROM/TO
+npm run migrate
+node scripts/create-admin.js hello@amberbroihier.com <choose-a-password>
+npm run dev             # runs on http://localhost:4000
+
+# 2. Start the frontend
+cd ~/projects/amberbroihier
+cp .env.example .env.local   # VITE_API_BASE_URL=http://localhost:4000
 npm install
 npm run dev
 ```
 
-Values live in the Supabase dashboard under **Project Settings → API**.
+Sign in at `/login` with the admin credentials above. The **Admin** link
+appears in the nav.
 
-## Supabase setup (one-time)
-
-1. Create a Supabase project.
-2. In the SQL editor, run [`supabase/schema.sql`](supabase/schema.sql). This
-   creates the `admins`, `site_content`, `blog_posts`, and `videos` tables
-   plus RLS policies (public read, admin-only write).
-3. In **Authentication → Users**, create Amber's user (email + password).
-4. In the SQL editor:
-   ```sql
-   insert into public.admins (user_id) values ('<paste UUID here>');
-   ```
-5. Sign in at `/login`. The Admin link appears in the nav.
-
-## Deploy
+## Deploy the frontend
 
 ```sh
 npm run deploy
 ```
 
-This builds to `dist/` and force-pushes to the `gh-pages` branch. GitHub
-Pages serves that branch at `amberbroihier.com` (CNAME is in `public/CNAME`).
+Builds to `dist/` and force-pushes to the `gh-pages` branch. GitHub Pages
+serves that branch at `amberbroihier.com` (see `public/CNAME`).
 
 First-time repo setup:
 
@@ -46,19 +45,25 @@ First-time repo setup:
     `185.199.108.153`, `185.199.109.153`, `185.199.110.153`,
     `185.199.111.153`
   - `CNAME` for `www` → `klowe45.github.io`
-- Wait for HTTPS to provision (GitHub does this automatically once DNS
-  resolves).
+- Set `VITE_API_BASE_URL` to the App Runner URL before building for
+  production (either in a `.env.production` file or as an env var at
+  build time).
+
+## Deploy the backend
+
+See [`amberbroihierBackEnd/README.md`](https://github.com/klowe45/amberbroihierBackEnd#readme).
+TL;DR: push, connect the repo to AWS App Runner, wire up env vars
+(DATABASE_URL from Secrets Manager, JWT_SECRET, CORS_ORIGIN=amberbroihier.com,
+SES_FROM/TO, AWS_REGION), attach an instance role with `ses:SendEmail`.
 
 ## Project layout
 
 ```
 src/
-  components/     Layout, ProtectedRoute
-  lib/            supabase client, AuthContext, useSiteContent hook
+  components/     Layout, ProtectedRoute, BookingForm
+  lib/            api client, AuthContext, useSiteContent hook
   pages/          Home, About, Speaking, Blog, BlogPost, Login, NotFound
-  pages/admin/    ContentEditor, BlogManager, VideoManager
-supabase/
-  schema.sql      Tables + RLS policies
+  pages/admin/    ContentEditor, BlogManager, VideoManager, BookingInbox
 public/
   CNAME           amberbroihier.com
   404.html        SPA fallback for GitHub Pages deep-link refreshes
