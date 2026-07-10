@@ -3,7 +3,7 @@
 Personal brand + public speaking site for Amber Broihier.
 
 - **Frontend:** Vite + React 19 + hand-written CSS. Deployed to GitHub Pages at [amberbroihier.com](https://amberbroihier.com) via `gh-pages`.
-- **Backend:** Express + Postgres — [klowe45/amberbroihierBackEnd](https://github.com/klowe45/amberbroihierBackEnd). Deployed on AWS App Runner, Postgres on RDS, SES for booking-inquiry emails.
+- **Backend:** Express + Postgres — [klowe45/amberbroihierBackEnd](https://github.com/klowe45/amberbroihierBackEnd). Deployed on Render, Postgres on Neon, Resend for booking-inquiry emails.
 
 ## Local development
 
@@ -13,7 +13,7 @@ Both the backend and frontend need to be running.
 # 1. Start the backend (in a separate terminal)
 cd ~/projects/amberbroihierBackEnd
 npm install
-cp .env.example .env    # fill in DATABASE_URL, JWT_SECRET, AWS_REGION, SES_FROM/TO
+cp .env.example .env    # fill in DATABASE_URL, JWT_SECRET, RESEND_API_KEY, EMAIL_FROM/TO
 npm run migrate
 node scripts/create-admin.js hello@amberbroihier.com <choose-a-password>
 npm run dev             # runs on http://localhost:4000
@@ -45,16 +45,15 @@ First-time repo setup:
     `185.199.108.153`, `185.199.109.153`, `185.199.110.153`,
     `185.199.111.153`
   - `CNAME` for `www` → `klowe45.github.io`
-- Set `VITE_API_BASE_URL` to the App Runner URL before building for
-  production (either in a `.env.production` file or as an env var at
-  build time).
+- Set `VITE_API_BASE_URL` to the Render service URL before building
+  for production (`echo 'VITE_API_BASE_URL=https://amberbroihier-api.onrender.com' > .env.production`).
 
 ## Deploy the backend
 
 See [`amberbroihierBackEnd/README.md`](https://github.com/klowe45/amberbroihierBackEnd#readme).
-TL;DR: push, connect the repo to AWS App Runner, wire up env vars
-(DATABASE_URL from Secrets Manager, JWT_SECRET, CORS_ORIGIN=amberbroihier.com,
-SES_FROM/TO, AWS_REGION), attach an instance role with `ses:SendEmail`.
+TL;DR: create a Neon project, sign up for Resend + verify the sending
+domain, then in Render click **New → Blueprint** and point at the
+backend repo — it reads `render.yaml` and provisions the service.
 
 ## Project layout
 
