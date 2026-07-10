@@ -1,0 +1,32 @@
+.home {
+  padding: 4rem 1.5rem 6rem;
+  max-width: 820px;
+  text-align: left;
+}
+
+.home-headline {
+  margin-bottom: 1.25rem;
+}
+
+.home-lede {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  max-width: 620px;
+  margin-bottom: 2.5rem;
+  line-height: 1.55;
+}
+
+.home-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .home {
+    padding: 2rem 1.5rem 4rem;
+  }
+  .home-lede {
+    font-size: 1.05rem;
+  }
+}

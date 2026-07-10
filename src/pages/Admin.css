@@ -1,0 +1,121 @@
+.admin {
+  padding: 2rem 1.5rem 5rem;
+}
+
+.admin-header {
+  margin-bottom: 2rem;
+}
+.admin-lede {
+  color: var(--text-muted);
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.admin-tab {
+  background: none;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.admin-tab:hover {
+  color: var(--text);
+}
+.admin-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.admin-panel {
+  background: var(--bg);
+}
+
+.admin-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+}
+.admin-list li {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-list .row-title {
+  flex: 1 1 auto;
+  font-weight: 500;
+}
+.admin-list .row-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.admin-list .row-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.text-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text);
+  border-radius: 2px;
+}
+.text-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.text-btn.danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.admin-form {
+  max-width: 720px;
+}
+
+.admin-form textarea {
+  min-height: 220px;
+  font-family: var(--sans);
+}
+
+.status-pill {
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+}
+.status-pill.published {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.save-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.save-status {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
