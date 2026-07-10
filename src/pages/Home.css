@@ -69,8 +69,15 @@
   color: var(--text-muted);
   margin-bottom: 0.35rem;
 }
+/* Select + Remove button on the same row so the two actions
+   ("change" vs "clear") sit adjacent instead of stacking. */
+.home-video-picker-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
 .home-video-picker select {
-  width: 100%;
+  flex: 1;
   padding: 0.55rem 0.65rem;
   font: inherit;
   background: var(--bg);

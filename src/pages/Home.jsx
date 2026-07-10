@@ -107,17 +107,33 @@ export default function Home() {
         <div className="home-video-picker">
           <label>
             <span className="home-video-picker-label">Featured video</span>
-            <select
-              value={featuredId}
-              onChange={(e) => set('home_featured_video_id', e.target.value)}
-            >
-              <option value="">— None —</option>
-              {videos.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.title}
-                </option>
-              ))}
-            </select>
+            <div className="home-video-picker-row">
+              <select
+                value={featuredId}
+                onChange={(e) =>
+                  set('home_featured_video_id', e.target.value)
+                }
+              >
+                <option value="">— None —</option>
+                {videos.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.title}
+                  </option>
+                ))}
+              </select>
+              {/* Explicit Remove — clearer than hunting for "None"
+                  in the dropdown. Only shows when there's actually
+                  something to remove (saved or pending). */}
+              {featuredId && (
+                <button
+                  type="button"
+                  className="text-btn danger"
+                  onClick={() => set('home_featured_video_id', '')}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           </label>
           <p className="home-video-picker-help">
             {videos.length === 0

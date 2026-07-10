@@ -39,7 +39,6 @@ export default function Book() {
           <a href={`mailto:${content.book_email}`}>
             <EditableText field="book_email" value={content.book_email} />
           </a>
-          .
         </p>
       </div>
       <BookingForm />
