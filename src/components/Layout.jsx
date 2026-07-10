@@ -15,7 +15,7 @@ const NAV_FALLBACK = {
   nav_writing: 'Writing',
   nav_admin: 'Admin',
   footer_contact_label: 'Contact',
-  footer_contact_email: 'hello@amberbroihier.com',
+  footer_contact_email: 'amberbroihier@gmail.com',
 }
 
 export default function Layout() {
