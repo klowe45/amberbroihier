@@ -101,6 +101,13 @@
   font-family: var(--sans);
 }
 
+/* Native checkbox colored in the site's green accent when checked.
+   `accent-color` is what modern browsers use to tint the check + box
+   fill without needing a full custom control. */
+.admin-form input[type='checkbox'] {
+  accent-color: var(--accent);
+}
+
 /* Helper text below a form field — the URL preview under the slug
    input, for example. Uses the muted color so it fades behind the
    field's primary state. */

@@ -45,20 +45,33 @@ export default function BlogPost() {
       })
   }, [slug])
 
-  // Sanitize once per body change. Also handle a fallback for posts
-  // written before the rich editor existed — those don't contain any
-  // HTML tags, so we wrap them in <p> to keep spacing consistent.
+  // Sanitize once per body change. Two fallbacks:
+  //   1. Pre-Quill posts stored plain text — wrap paragraphs in <p>
+  //      so spacing survives.
+  //   2. Short-form posts where the writer used only the Summary
+  //      field (or Quill emitted its empty '<p></p>' shell) —
+  //      render the excerpt so the detail page isn't blank.
   const sanitizedBody = useMemo(() => {
-    if (!post?.body) return ''
-    const looksLikeHtml = /<[a-z][\s\S]*>/i.test(post.body)
+    if (!post) return ''
+    // Strip tags + whitespace to detect an effectively-empty body.
+    const stripped = (post.body || '').replace(/<[^>]*>/g, '').trim()
+    const rawSource = stripped ? post.body : post.excerpt || ''
+    if (!rawSource) return ''
+    // Normalize non-breaking spaces (both the HTML entity and the
+    // literal 0xA0 char) to regular spaces. Quill often emits &nbsp;
+    // when pasting from Word / Google Docs; browsers won't wrap lines
+    // at those, so paragraphs overflow the container. Replacing with
+    // real spaces restores natural word-wrap.
+    const source = rawSource.replace(/&nbsp;/g, ' ').replace(/ /g, ' ')
+    const looksLikeHtml = /<[a-z][\s\S]*>/i.test(source)
     const html = looksLikeHtml
-      ? post.body
-      : `<p>${post.body.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`
+      ? source
+      : `<p>${source.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`
     return DOMPurify.sanitize(html, {
       ALLOWED_TAGS,
       ALLOWED_ATTR,
     })
-  }, [post?.body])
+  }, [post])
 
   if (status === 'loading') {
     return <div className="container post">Loading…</div>

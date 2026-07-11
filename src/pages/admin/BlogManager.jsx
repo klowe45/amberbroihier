@@ -146,8 +146,9 @@ export default function BlogManager() {
             pattern="[a-z0-9-]+"
             value={editing.slug}
             onChange={(e) => {
+              const slug = e.target.value
               setSlugTouched(true)
-              setEditing({ ...editing, slug: e.target.value })
+              setEditing((prev) => ({ ...prev, slug }))
             }}
           />
           <small className="field-help">
@@ -166,9 +167,10 @@ export default function BlogManager() {
           <textarea
             rows={2}
             value={editing.excerpt ?? ''}
-            onChange={(e) =>
-              setEditing({ ...editing, excerpt: e.target.value })
-            }
+            onChange={(e) => {
+              const excerpt = e.target.value
+              setEditing((prev) => ({ ...prev, excerpt }))
+            }}
           />
           <small className="field-help">
             Shows under the title on the writing list page. Leave blank
@@ -181,7 +183,14 @@ export default function BlogManager() {
             <ReactQuill
               theme="snow"
               value={editing.body ?? ''}
-              onChange={(html) => setEditing({ ...editing, body: html })}
+              // Functional setState guards against Quill firing onChange
+              // with a closure that captured a stale `editing` — that
+              // pattern silently overwrites concurrent field updates
+              // and (we suspect) was zeroing the body back to '<p></p>'
+              // on save.
+              onChange={(html) =>
+                setEditing((prev) => ({ ...prev, body: html }))
+              }
               modules={quillModules}
               formats={quillFormats}
               placeholder="Write the post…"
@@ -196,9 +205,10 @@ export default function BlogManager() {
             type="checkbox"
             style={{ width: 'auto' }}
             checked={editing.published}
-            onChange={(e) =>
-              setEditing({ ...editing, published: e.target.checked })
-            }
+            onChange={(e) => {
+              const published = e.target.checked
+              setEditing((prev) => ({ ...prev, published }))
+            }}
           />
           <span style={{ marginBottom: 0 }}>Published</span>
         </label>

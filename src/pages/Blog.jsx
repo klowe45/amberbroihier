@@ -42,19 +42,21 @@ export default function Blog() {
         <ul className="post-list">
           {posts.map((p) => (
             <li key={p.id} className="post-list-item">
-              <Link to={`/blog/${p.slug}`} className="post-list-title">
-                {p.title}
+              <Link to={`/blog/${p.slug}`} className="post-list-link">
+                <h2 className="post-list-title">{p.title}</h2>
+                {p.published_at && (
+                  <time className="post-list-date">
+                    {new Date(p.published_at).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </time>
+                )}
+                {p.excerpt && (
+                  <p className="post-list-excerpt">{p.excerpt}</p>
+                )}
               </Link>
-              {p.published_at && (
-                <time className="post-list-date">
-                  {new Date(p.published_at).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </time>
-              )}
-              {p.excerpt && <p className="post-list-excerpt">{p.excerpt}</p>}
             </li>
           ))}
         </ul>

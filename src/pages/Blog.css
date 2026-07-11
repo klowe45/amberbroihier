@@ -1,5 +1,5 @@
 .blog {
-  padding: 3rem 1.5rem 5rem;
+  padding: 3rem 1.5rem 1.5rem;
   max-width: 780px;
 }
 
@@ -24,19 +24,52 @@
 .post-list-item:first-child {
   padding-top: 0;
 }
+/* Tighter bottom padding on rows without an excerpt — the date line
+   ends up flush against the border otherwise, making cards without
+   a summary look artificially loose. */
+.post-list-item:not(:has(.post-list-excerpt)) {
+  padding-bottom: 0.9rem;
+}
+/* Trim the last item's own bottom padding — the .blog page padding
+   plus the site-main bottom clearance is enough breathing room. */
+.post-list-item:last-child {
+  padding-bottom: 0.5rem;
+  border-bottom: none;
+}
+
+/* The whole card is one clickable Link. Reset the anchor styling so
+   the wrapping element carries no underline/color-inherit; per-child
+   classes below re-apply the right typography. */
+.post-list-link {
+  display: block;
+  color: inherit;
+  border-bottom: none;
+  /* Small negative offset + padding so the hover tint reads as a
+     full "card" area with a bit of breathing room, without shifting
+     the surrounding layout. */
+  margin: 0 -0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 3px;
+  transition: background 140ms ease;
+}
+.post-list-link:hover {
+  /* Barely-there accent tint — enough to signal "clickable" but not
+     enough to compete with the actual content. */
+  background: rgba(40, 53, 31, 0.04);
+  border-bottom: none;
+}
+.post-list-link:hover .post-list-title {
+  color: var(--accent);
+}
 
 .post-list-title {
   font-family: var(--serif);
   font-size: 1.75rem;
   color: var(--text);
   line-height: 1.2;
-  display: block;
-  border-bottom: none;
-  margin-bottom: 0.25rem;
-}
-.post-list-title:hover {
-  color: var(--accent);
-  border-bottom: none;
+  margin: 0 0 0.25rem;
+  font-weight: 500;
+  transition: color 120ms ease;
 }
 
 .post-list-date {
@@ -69,6 +102,10 @@
   font-size: 1.15rem;
   line-height: 1.75;
   color: var(--text);
+  /* Defensive: force long words / URLs to wrap so a run-on token
+     can't push the paragraph past the container width. */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .post-body p {
