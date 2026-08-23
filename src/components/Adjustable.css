@@ -1,0 +1,44 @@
+.adjustable {
+  position: relative;
+}
+
+/* Arrow stack in the left gutter — only for admin, only on hover. */
+.adjustable-controls {
+  position: absolute;
+  left: -2.1rem;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.adjustable:hover > .adjustable-controls {
+  opacity: 1;
+}
+
+.adjustable-btn {
+  width: 1.4rem;
+  height: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.adjustable-btn:hover {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.adjustable-val {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

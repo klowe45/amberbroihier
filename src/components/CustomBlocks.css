@@ -1,0 +1,162 @@
+/* Rendered inside each page's content wrapper, so width + typography are
+   inherited from the page. Blocks read as normal prose paragraphs. */
+.custom-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.custom-block {
+  position: relative;
+  border-top: 2px solid transparent; /* reserved for the drop indicator */
+}
+.custom-block.is-over {
+  border-top-color: var(--accent);
+}
+.custom-block.is-dragging {
+  opacity: 0.5;
+}
+
+/* Block text matches the site's body prose. */
+.custom-block-text {
+  display: block;
+  max-width: var(--max-prose);
+  white-space: pre-wrap; /* honor the newlines Amber types */
+  font-family: var(--sans);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+/* Drag handle — sits in the left gutter, only visible on hover. */
+.custom-block-handle {
+  position: absolute;
+  left: -1.4rem;
+  top: 0.15rem;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: grab;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.custom-block-handle:active {
+  cursor: grabbing;
+}
+.custom-block:hover .custom-block-handle {
+  opacity: 0.6;
+}
+.custom-block-handle:hover {
+  opacity: 1 !important;
+}
+
+/* Remove — small ×, in the right gutter, on hover. */
+.custom-block-remove {
+  position: absolute;
+  right: -1.4rem;
+  top: 0.1rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.custom-block:hover .custom-block-remove {
+  opacity: 0.7;
+}
+.custom-block-remove:hover {
+  opacity: 1;
+  color: var(--danger);
+}
+
+.custom-block-add {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+}
+.custom-block-add:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.custom-block-add span {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* Image blocks — in the flow, so they push neighbors apart. */
+.custom-block-image {
+  position: relative;
+  margin: 0;
+  max-width: 100%;
+}
+.custom-block-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.custom-block-image-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  background: var(--bg-alt);
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+}
+.custom-block-resize {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  border-radius: 3px;
+  cursor: nwse-resize;
+  display: none;
+}
+.custom-block:hover .custom-block-resize {
+  display: block;
+}
+
+
+/* Admin drag affordances (pointer-based reorder). touch-action:none lets a
+   drag start without the browser hijacking it for scroll. */
+.custom-blocks.is-admin .custom-block-handle,
+.custom-blocks.is-admin .custom-block-image img,
+.custom-blocks.is-admin .custom-block-resize {
+  touch-action: none;
+}
+.custom-blocks.is-admin .custom-block-image img {
+  cursor: grab;
+}
+.custom-blocks.is-admin .custom-block-image img:active {
+  cursor: grabbing;
+}
+.custom-block.is-dragging {
+  opacity: 0.4;
+}
+.custom-block.is-over {
+  border-top-color: var(--accent);
+}

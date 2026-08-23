@@ -1,0 +1,114 @@
+.imgadd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(30, 26, 20, 0.4);
+}
+.imgadd {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.35);
+  padding: 1.3rem 1.4rem 1.4rem;
+}
+.imgadd-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.imgadd-head h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  color: var(--text);
+}
+.imgadd-x {
+  border: none;
+  background: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.imgadd-x:hover { color: var(--text); }
+
+.imgadd-error {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+  color: var(--danger);
+  background: rgba(160, 48, 48, 0.08);
+  border-radius: 6px;
+}
+
+.imgadd-field {
+  display: block;
+  margin-top: 1rem;
+}
+.imgadd-field > span {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+.imgadd-field small {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.imgadd-field input[type='file'] {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.imgadd-or {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0.9rem 0 0.2rem;
+}
+
+.imgadd-url-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.imgadd-url-row input {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-alt);
+  color: var(--text);
+}
+.imgadd-add {
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+}
+.imgadd-add:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.imgadd-add:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.imgadd-hint {
+  margin: 1.1rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

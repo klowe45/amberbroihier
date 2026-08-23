@@ -1,8 +1,10 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
 import EditableText from '../components/EditableText.jsx'
+import CustomBlocks from '../components/CustomBlocks.jsx'
 import './About.css'
 
 const FALLBACK = {
+  about_eyebrow: 'About',
   about_headline: 'About Amber',
   about_p1:
     'Amber Broihier is a speaker and writer focused on the intersection of leadership, communication, and personal story.',
@@ -18,7 +20,9 @@ export default function About() {
   return (
     <div className="container about">
       <div className="prose">
-        <p className="eyebrow">About</p>
+        <p className="eyebrow">
+          <EditableText field="about_eyebrow" value={content.about_eyebrow} />
+        </p>
         <h1>
           <EditableText field="about_headline" value={content.about_headline} />
         </h1>
@@ -31,6 +35,7 @@ export default function About() {
         <p>
           <EditableText field="about_p3" value={content.about_p3} multiline />
         </p>
+        <CustomBlocks page="about" content={content} />
       </div>
     </div>
   )

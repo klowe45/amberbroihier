@@ -1,6 +1,7 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
 import BookingForm from '../components/BookingForm.jsx'
 import EditableText from '../components/EditableText.jsx'
+import CustomBlocks from '../components/CustomBlocks.jsx'
 import './Book.css'
 
 const FALLBACK = {
@@ -42,6 +43,7 @@ export default function Book() {
         </p>
       </div>
       <BookingForm />
+      <CustomBlocks page="book" content={content} />
     </div>
   )
 }

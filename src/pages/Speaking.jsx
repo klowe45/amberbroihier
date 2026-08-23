@@ -6,9 +6,11 @@ import { useConfirm } from '../lib/ConfirmContext.jsx'
 import { useSiteContent } from '../lib/useSiteContent.js'
 import { toEmbedUrl } from '../lib/embedUrl.js'
 import EditableText from '../components/EditableText.jsx'
+import CustomBlocks from '../components/CustomBlocks.jsx'
 import './Speaking.css'
 
 const FALLBACK = {
+  speaking_eyebrow: 'Speaking',
   speaking_headline: 'Speaking',
   speaking_lede:
     'Keynotes, panels, and workshops on communication, leadership, and telling the truth about the work.',
@@ -56,7 +58,9 @@ export default function Speaking() {
   return (
     <div className="container speaking">
       <div className="speaking-intro">
-        <p className="eyebrow">Speaking</p>
+        <p className="eyebrow">
+          <EditableText field="speaking_eyebrow" value={content.speaking_eyebrow} />
+        </p>
         <h1>
           <EditableText
             field="speaking_headline"
@@ -88,6 +92,8 @@ export default function Speaking() {
           </div>
         </section>
       )}
+
+      <CustomBlocks page="speaking" content={content} />
     </div>
   )
 }

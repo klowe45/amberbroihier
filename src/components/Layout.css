@@ -51,6 +51,10 @@
   .nav .edit-mode-toggle {
     order: -1;
   }
+  /* Add-image icon just to the LEFT of the edit toggle. */
+  .nav .image-add-btn {
+    order: -2;
+  }
 }
 
 .nav a {
@@ -80,6 +84,7 @@
 
 .site-main {
   flex: 1;
+  position: relative; /* anchor for the free-positioned image layer */
   /* Extra bottom padding so page content doesn't hide behind the
      fixed footer. Roughly matches the footer's own height + a small
      buffer; the bump on the mobile breakpoint below accounts for the
@@ -137,4 +142,33 @@
   .site-main {
     padding-bottom: 6.5rem;
   }
+}
+
+/* Admin-only appearance (colors & fonts) gear in the header nav. */
+.theme-gear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.theme-gear:hover { color: var(--accent); }
+.theme-gear svg { width: 18px; height: 18px; }
+
+/* Decorative frame border at the viewport edges (theme setting). Fixed so it
+   stays put while the page scrolls; pointer-events:none so it never blocks. */
+.site-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  pointer-events: none;
+  border-top: var(--frame-top, none);
+  border-right: var(--frame-right, none);
+  border-bottom: var(--frame-bottom, none);
+  border-left: var(--frame-left, none);
 }

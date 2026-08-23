@@ -22,13 +22,19 @@
 }
 
 .editable-pencil {
+  /* Absolute (no offsets) keeps the pencil at its natural spot after the text
+     but OUT of the layout flow, so it can't add width that wraps a near-full-
+     width title onto a phantom second line. Capped size so it stays subtle on
+     large headings. */
+  position: absolute;
   display: inline-block;
-  margin-left: 0.35em;
-  font-size: 0.75em;
+  margin-left: 0.3em;
+  font-size: 0.85rem;
   color: var(--accent);
   opacity: 0;
   transition: opacity 120ms ease;
   vertical-align: baseline;
+  pointer-events: none;
 }
 .editable:hover .editable-pencil,
 .editable:focus-visible .editable-pencil {

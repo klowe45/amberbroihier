@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { useSiteContent } from '../lib/useSiteContent.js'
 import EditableText from '../components/EditableText.jsx'
+import CustomBlocks from '../components/CustomBlocks.jsx'
 import './Blog.css'
 
 const FALLBACK = {
@@ -61,6 +62,7 @@ export default function Blog() {
           ))}
         </ul>
       )}
+      <CustomBlocks page="blog" content={content} />
     </div>
   )
 }

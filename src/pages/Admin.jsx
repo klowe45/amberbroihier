@@ -9,7 +9,9 @@ import './Admin.css'
 
 const TABS = [
   { id: 'bookings', label: 'Inquiries' },
-  { id: 'blog', label: 'Writing' },
+  // The blog tab manages the "Writing" nav page, so its label follows whatever
+  // Amber renamed that nav item to (nav_writing) instead of a hardcoded string.
+  { id: 'blog', label: 'Writing', labelField: 'nav_writing' },
   { id: 'videos', label: 'Videos' },
 ]
 
@@ -17,6 +19,7 @@ const FALLBACK = {
   admin_eyebrow: 'Admin',
   admin_headline: 'Welcome back, Amber',
   admin_subtitle: 'Kenneth Loves You!',
+  nav_writing: 'Writing',
 }
 
 export default function Admin() {
@@ -49,7 +52,7 @@ export default function Admin() {
             className={`admin-tab ${tab === t.id ? 'active' : ''}`}
             onClick={() => setTab(t.id)}
           >
-            {t.label}
+            {(t.labelField && content[t.labelField]) || t.label}
           </button>
         ))}
       </nav>

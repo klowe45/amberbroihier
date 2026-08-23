@@ -8,6 +8,7 @@ import Home from './pages/Home.jsx'
 import About from './pages/About.jsx'
 import Speaking from './pages/Speaking.jsx'
 import Book from './pages/Book.jsx'
+import Inquiry from './pages/Inquiry.jsx'
 import Blog from './pages/Blog.jsx'
 import BlogPost from './pages/BlogPost.jsx'
 import Login from './pages/Login.jsx'
@@ -25,6 +26,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/speaking" element={<Speaking />} />
           <Route path="/book" element={<Book />} />
+          <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/login" element={<Login />} />

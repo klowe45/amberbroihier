@@ -12,6 +12,7 @@ const EditContext = createContext({
   set: () => {},
   publish: async () => {},
   cancel: () => {},
+  refresh: () => {},
 })
 
 // localStorage key for the pending-edits buffer. Namespaced under the
@@ -73,6 +74,10 @@ export function EditProvider({ children }) {
 
   const cancel = useCallback(() => setPending({}), [])
 
+  // Force useSiteContent subscribers to re-fetch — e.g. after the theme editor
+  // saves directly to /api/content (bypassing the pending-edit publish path).
+  const refresh = useCallback(() => setPublishTick((n) => n + 1), [])
+
   const publish = useCallback(async () => {
     const entries = Object.entries(pending).map(([key, value]) => ({
       key,
@@ -103,8 +108,8 @@ export function EditProvider({ children }) {
   }, [isDirty])
 
   const value = useMemo(
-    () => ({ pending, isDirty, publishing, publishTick, set, publish, cancel }),
-    [pending, isDirty, publishing, publishTick, set, publish, cancel]
+    () => ({ pending, isDirty, publishing, publishTick, set, publish, cancel, refresh }),
+    [pending, isDirty, publishing, publishTick, set, publish, cancel, refresh]
   )
 
   return <EditContext.Provider value={value}>{children}</EditContext.Provider>
