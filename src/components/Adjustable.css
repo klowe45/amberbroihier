@@ -1,5 +1,11 @@
+/* flow-root: the wrapper's own margin-top (the drag/arrow spacing) must
+   not collapse with the previous element's bottom margin — with plain
+   block wrappers the first ~24px of a downward drag did nothing, then
+   the element jumped. Children's margins stay inside the wrapper, and
+   since site elements only carry bottom margins the page looks the same. */
 .adjustable {
   position: relative;
+  display: flow-root;
 }
 @media (max-width: 640px) {
   .adjustable {
@@ -7,22 +13,24 @@
   }
 }
 
-/* Grip + arrow stack in the left gutter — only for admin, only on hover
-   (and while dragging, so it doesn't blink out mid-drag). */
+/* Grip + arrow stack in the left gutter — admin only. Faintly visible
+   all the time (so it can be found on a touch screen, where there is no
+   hover), full strength on hover and while dragging. */
 .adjustable-controls {
   position: absolute;
-  left: -2.1rem;
+  left: -2.2rem;
   top: 0;
   z-index: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  opacity: 0;
+  opacity: 0.3;
   transition: opacity 0.15s;
 }
 .adjustable:hover > .adjustable-controls,
-.adjustable.is-dragging > .adjustable-controls {
+.adjustable.is-dragging > .adjustable-controls,
+.adjustable-controls:hover {
   opacity: 1;
 }
 .adjustable.is-dragging {
@@ -31,8 +39,8 @@
 }
 
 .adjustable-grip {
-  width: 1.4rem;
-  height: 1.3rem;
+  width: 1.6rem;
+  height: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;

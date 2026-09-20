@@ -1,0 +1,29 @@
+.page-menu {
+  position: fixed;
+  z-index: 90;
+  min-width: 220px;
+  padding: 0.3rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px -8px rgba(45, 42, 38, 0.35);
+  font-family: var(--sans);
+}
+.page-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.page-menu-item:hover,
+.page-menu-item:focus-visible {
+  background: rgba(40, 53, 31, 0.07);
+  outline: none;
+}

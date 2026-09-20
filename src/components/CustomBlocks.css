@@ -140,3 +140,8 @@
   top: 1.5rem;
   left: -1.75rem;
 }
+
+/* A slot list sits directly under the element it belongs to. */
+.custom-blocks-slot {
+  margin-top: 0;
+}

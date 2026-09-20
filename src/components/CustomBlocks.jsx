@@ -31,7 +31,11 @@ const normalizeBlocks = (raw) => {
     .filter((e) => e && e.id)
 }
 
-export default function CustomBlocks({ page, content = {} }) {
+// `slot` renders a list that belongs to a specific element (the blocks
+// Amber right-clicked "Add text below" onto), stored under
+// blocks_slot_<id>; it has no "Add text block" button of its own — the
+// right-click menu is how things get into it.
+export default function CustomBlocks({ page, content = {}, slot }) {
   const { isAdmin } = useAuth()
   const { pending, set } = useEdit()
   const confirm = useConfirm()
@@ -42,7 +46,7 @@ export default function CustomBlocks({ page, content = {} }) {
   const overRef = useRef(null)
   const blockEls = useRef(new Map())
 
-  const listKey = `blocks_${page}`
+  const listKey = slot ? `blocks_slot_${slot}` : `blocks_${page}`
   // Text blocks only — images live in the free-positioned ImageLayer now.
   const blocks = normalizeBlocks(pending[listKey] ?? content[listKey] ?? '[]').filter(
     (b) => b.type !== 'image'
@@ -135,10 +139,13 @@ export default function CustomBlocks({ page, content = {} }) {
   }
 
   const visible = isAdmin ? blocks : blocks.filter((b) => payloadOf(b.id).trim())
-  if (!visible.length && !isAdmin) return null
+  if (!visible.length && (!isAdmin || slot)) return null
 
   return (
-    <div className={`custom-blocks${isAdmin ? ' is-admin' : ''}`}>
+    <div
+      className={`custom-blocks${isAdmin ? ' is-admin' : ''}${slot ? ' custom-blocks-slot' : ''}`}
+      data-list-key={listKey}
+    >
       {visible.map((b) => (
         // Each block gets the ▲/▼ spacing arrows (no grip — the block's own
         // ⠿ handle reorders it). Space is stored as space_blk_<id>.
@@ -146,6 +153,7 @@ export default function CustomBlocks({ page, content = {} }) {
         <div
           ref={(el) => { if (el) blockEls.current.set(b.id, el); else blockEls.current.delete(b.id) }}
           className={`custom-block${overId === b.id ? ' is-over' : ''}${dragId === b.id ? ' is-dragging' : ''}`}
+          data-block-id={b.id}
         >
           {isAdmin && (
             <span
@@ -194,7 +202,7 @@ export default function CustomBlocks({ page, content = {} }) {
         </Adjustable>
       ))}
 
-      {isAdmin && (
+      {isAdmin && !slot && (
         <button type="button" className="custom-block-add" onClick={addText}>
           <span aria-hidden="true">+</span> Add text block
         </button>

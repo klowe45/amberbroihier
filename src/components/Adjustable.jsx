@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
+import CustomBlocks from './CustomBlocks.jsx'
 import './Adjustable.css'
 
 // Wraps a page element with admin-only positioning controls in the left
@@ -40,22 +41,28 @@ export default function Adjustable({ id, content = {}, step = 8, grip = true, cl
     const startX = e.clientX
     const startY = e.clientY
     let cur = { gap: savedGap, shift: savedShift }
+    // Snap back to the natural position when close to it, so a small
+    // wobble doesn't leave a stray 2px offset behind.
+    const SNAP = 6
+    const snap = (v) => (Math.abs(v) < SNAP ? 0 : v)
     const move = (ev) => {
       cur = {
-        gap: clamp(Math.round(savedGap + (ev.clientY - startY)), MIN_SPACE, MAX_SPACE),
-        shift: clamp(Math.round(savedShift + (ev.clientX - startX)), -MAX_SHIFT, MAX_SHIFT),
+        gap: clamp(snap(Math.round(savedGap + (ev.clientY - startY))), MIN_SPACE, MAX_SPACE),
+        shift: clamp(snap(Math.round(savedShift + (ev.clientX - startX))), -MAX_SHIFT, MAX_SHIFT),
       }
       setLive(cur)
     }
     const up = () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
       if (cur.gap !== savedGap) set(spaceKey, String(cur.gap))
       if (cur.shift !== savedShift) set(shiftKey, String(cur.shift))
       setLive(null)
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
   }
 
   const reset = (e) => {
@@ -75,7 +82,12 @@ export default function Adjustable({ id, content = {}, step = 8, grip = true, cl
   if (shift) style.left = shift
 
   return (
-    <div className={`adjustable${live ? ' is-dragging' : ''} ${className}`.trim()} style={style}>
+    <>
+    <div
+      className={`adjustable${live ? ' is-dragging' : ''} ${className}`.trim()}
+      style={style}
+      data-adjust-id={id}
+    >
       {isAdmin && (
         <div className="adjustable-controls">
           {grip && <span
@@ -101,5 +113,12 @@ export default function Adjustable({ id, content = {}, step = 8, grip = true, cl
       )}
       {children}
     </div>
+    {/* Text blocks added "below this" from the right-click menu. Custom
+        blocks are already inside CustomBlocks, so they don't get a slot
+        of their own (that would recurse). */}
+    {!className.includes('custom-block-adjust') && (
+      <CustomBlocks page="" content={content} slot={id} />
+    )}
+    </>
   )
 }

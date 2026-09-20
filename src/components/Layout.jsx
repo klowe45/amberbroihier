@@ -13,6 +13,7 @@ import ImageAddModal from './ImageAddModal.jsx'
 import ImageLayer from './ImageLayer.jsx'
 import Analytics from './Analytics.jsx'
 import SocialIcon from './SocialIcon.jsx'
+import PageContextMenu from './PageContextMenu.jsx'
 import { parseSocials, platformById, isSafeUrl } from '../lib/socials.js'
 import './Layout.css'
 
@@ -199,6 +200,9 @@ export default function Layout() {
       <main className="site-main">
         <Outlet />
         {pageKey && <ImageLayer page={pageKey} content={content} />}
+        {isAdmin && pageKey && (
+          <PageContextMenu pageKey={pageKey} onAddMedia={() => setAddImageOpen(true)} />
+        )}
       </main>
 
       {isAdmin && addImageOpen && (
