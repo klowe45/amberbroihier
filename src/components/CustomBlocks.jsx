@@ -1,6 +1,8 @@
 import { useReducer, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
+import { useConfirm } from '../lib/ConfirmContext.jsx'
+import { stripHtml } from '../lib/richText.js'
 import EditableText from './EditableText.jsx'
 import Adjustable from './Adjustable.jsx'
 import './CustomBlocks.css'
@@ -32,6 +34,7 @@ const normalizeBlocks = (raw) => {
 export default function CustomBlocks({ page, content = {} }) {
   const { isAdmin } = useAuth()
   const { pending, set } = useEdit()
+  const confirm = useConfirm()
   const [dragId, setDragId] = useState(null)
   const [overId, setOverId] = useState(null)
   const [, force] = useReducer((n) => n + 1, 0)
@@ -49,7 +52,20 @@ export default function CustomBlocks({ page, content = {} }) {
   const payloadOf = (id) => pending[`block_${id}`] ?? content[`block_${id}`] ?? ''
 
   const addText = () => writeList([...blocks, { id: genBlockId(), type: 'text' }])
-  const removeBlock = (id) => {
+  // Confirm first — the text is gone from the page on Publish (though
+  // Undo in the edit bar brings it back until then).
+  const removeBlock = async (id) => {
+    const text = stripHtml(payloadOf(id)).trim()
+    const preview = text.length > 60 ? `${text.slice(0, 60)}…` : text
+    const ok = await confirm({
+      title: 'Remove this text block?',
+      message: preview
+        ? `"${preview}" will be removed from the page.`
+        : 'This empty block will be removed from the page.',
+      confirmLabel: 'Remove block',
+      danger: true,
+    })
+    if (!ok) return
     writeList(blocks.filter((b) => b.id !== id))
     set(`block_${id}`, '')
   }
@@ -171,19 +187,8 @@ export default function CustomBlocks({ page, content = {} }) {
               multiline
               placeholder="Click to add text…"
               className="custom-block-text"
+              onRemove={isAdmin ? () => removeBlock(b.id) : undefined}
             />
-          )}
-
-          {isAdmin && (
-            <button
-              type="button"
-              className="custom-block-remove"
-              onClick={() => removeBlock(b.id)}
-              aria-label="Remove this block"
-              title="Remove block"
-            >
-              ×
-            </button>
           )}
         </div>
         </Adjustable>

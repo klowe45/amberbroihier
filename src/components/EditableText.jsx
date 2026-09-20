@@ -51,6 +51,8 @@ import './EditableText.css'
 //                 the wrapping element already carries a strong visual
 //                 (a .btn, for example) and a pencil-inside-a-button
 //                 looks noisy.
+//   onRemove    — when given, a × button renders beside the "+" at the
+//                 top-right (custom blocks use it to remove themselves).
 //   resizable   — show a drag handle in the bottom-right corner so Amber
 //                 can set the box's width/height. Defaults to `multiline`.
 //                 The size is stored in site_content as `size_<field>`
@@ -76,6 +78,7 @@ export default function EditableText({
   enabled = true,
   pencil = true,
   resizable = multiline,
+  onRemove,
 }) {
   const { isAdmin } = useAuth()
   const { pending, set } = useEdit()
@@ -303,10 +306,11 @@ export default function EditableText({
     setEditing(true)
   }
 
-  // Gutter "+" (multiline fields only): inserts a block at the caret.
-  const plus = multiline && (
+  // Top-right controls: "+" (multiline fields only) inserts a block at the
+  // caret; × (when the host provides onRemove) removes the element.
+  const plus = (multiline || onRemove) && (
     <>
-      <button
+      {multiline && <button
         type="button"
         className={`editable-plus${menuOpen ? ' is-open' : ''}`}
         onClick={(e) => {
@@ -326,7 +330,18 @@ export default function EditableText({
         title="Insert a block"
       >
         +
-      </button>
+      </button>}
+      {onRemove && (
+        <button
+          type="button"
+          className="editable-remove"
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); onRemove() }}
+          aria-label="Remove this block"
+          title="Remove block"
+        >
+          ×
+        </button>
+      )}
       {menuOpen && (
         <span className="editable-plus-menu" role="menu" style={menuPos ?? undefined}>
           {INSERT_BLOCKS.map((b) => (

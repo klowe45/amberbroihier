@@ -532,6 +532,11 @@ export function fromEditorHtml(html, multiline) {
 export function stripHtml(value) {
   const v = value ?? ''
   if (!looksLikeHtml(v)) return v
-  if (typeof window === 'undefined') return v.replace(/<[^>]+>/g, '')
-  return new DOMParser().parseFromString(v, 'text/html').body.textContent ?? ''
+  // Block boundaries become spaces so "line one</p><p>line two" doesn't
+  // run together.
+  const spaced = v.replace(/<\/(p|li|h[1-6]|td|th|tr|a|blockquote|div)>|<br\s*\/?>|<hr\s*\/?>/gi, '$& ')
+  if (typeof window === 'undefined') return spaced.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+  return (new DOMParser().parseFromString(spaced, 'text/html').body.textContent ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
