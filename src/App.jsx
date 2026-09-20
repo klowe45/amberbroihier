@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Home from './pages/Home.jsx'
 import About from './pages/About.jsx'
 import Speaking from './pages/Speaking.jsx'
+import Prices from './pages/Prices.jsx'
 import Book from './pages/Book.jsx'
 import Inquiry from './pages/Inquiry.jsx'
 import Blog from './pages/Blog.jsx'
@@ -25,6 +26,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/speaking" element={<Speaking />} />
+          <Route path="/prices" element={<Prices />} />
           <Route path="/book" element={<Book />} />
           <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/blog" element={<Blog />} />

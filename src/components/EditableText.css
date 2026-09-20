@@ -57,33 +57,231 @@
   font-style: italic;
 }
 
-/* Input mode — matches the surrounding typography so the swap doesn't
-   jump. Always a textarea internally (even for logically-single-line
-   fields) so long text wraps into a growing box instead of scrolling
-   horizontally and hiding the first characters. */
-.editable-input {
-  font: inherit;
-  color: inherit;
-  background: var(--bg);
+/* Multiline fields lay out as blocks (their HTML holds paragraphs). The
+   pencil then sits in the top-right corner instead of trailing the text. */
+.editable-block {
+  display: block;
+}
+.editable-block .editable-pencil {
+  top: 0.15em;
+  right: 0.3em;
+  margin-left: 0;
+}
+
+/* Resize handle — small accent square in the bottom-right corner, shown
+   on hover. Dragging sets the box's width/height (persisted per field). */
+.editable-resize {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  border-radius: 3px;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.editable:hover .editable-resize,
+.editable:focus-visible .editable-resize {
+  opacity: 1;
+}
+
+/* ---------- Editing mode: inline Quill editor + floating toolbar ---------- */
+
+/* The editor swaps in for the text. Block-level and full-width (like
+   the old textarea) so long copy wraps into a growing box. */
+.editable-editor {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 10em;
+  text-align: left;
+}
+.editable-editor-single {
+  min-width: 8em;
+}
+
+/* Editor surface matches the surrounding typography so the swap
+   doesn't jump. Snow's own font/size/padding are overridden here. */
+.editable-editor .ql-container.ql-snow {
   border: 1px solid var(--accent);
   border-radius: 2px;
-  padding: 0.35em 0.5em;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  resize: none;
-  overflow: hidden;
+  background: var(--bg);
+  font-family: inherit;
+  font-size: inherit;
   line-height: inherit;
-  display: block;
-  vertical-align: middle;
-  min-height: 1em;
+  color: inherit;
 }
-.editable-input:focus {
-  outline: none;
+.editable-editor .ql-editor {
+  padding: 0.35em 0.5em;
+  min-height: 1.5em;
+  line-height: inherit;
+  white-space: pre-wrap;
+  overflow: visible;
+}
+.editable-editor-multi .ql-editor {
+  min-height: var(--editable-h, 4em);
+}
+.editable-editor .ql-container.ql-snow:focus-within {
   box-shadow: 0 0 0 3px rgba(40, 53, 31, 0.15);
 }
-/* Single-line editables strip their scrollbar so it never briefly
-   flickers into view while the auto-grow is calculating scrollHeight. */
-.editable-input-single {
-  overflow-y: hidden;
+.editable-editor .ql-editor.ql-blank::before {
+  left: 0.5em;
+  right: 0.5em;
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: normal;
+}
+.editable-editor .ql-editor p {
+  margin: 0;
+}
+.editable-editor-multi .ql-editor p + p {
+  margin-top: 0.75em;
+}
+
+/* Toolbar floats just above the field, out of the document flow, so
+   opening an editor never shoves the page around. */
+.editable-editor .ql-toolbar.ql-snow {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  width: max-content;
+  max-width: min(780px, calc(100vw - 2rem));
+  padding: 4px 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px -8px rgba(45, 42, 38, 0.35);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  line-height: 1;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.editable-editor .ql-toolbar.ql-snow.is-right-anchored {
+  left: auto;
+  right: 0;
+}
+.editable-editor .ql-toolbar.ql-snow.is-below {
+  bottom: auto;
+  top: calc(100% + 6px);
+}
+.editable-editor .ql-toolbar.ql-snow .ql-formats {
+  margin-right: 8px;
+}
+.editable-editor .ql-toolbar.ql-snow .ql-formats:last-child {
+  margin-right: 0;
+}
+.editable-editor .ql-toolbar .ql-stroke {
+  stroke: var(--text);
+}
+.editable-editor .ql-toolbar .ql-fill {
+  fill: var(--text);
+}
+.editable-editor .ql-toolbar .ql-picker-label {
+  color: var(--text);
+}
+.editable-editor .ql-toolbar button:hover .ql-stroke,
+.editable-editor .ql-toolbar button.ql-active .ql-stroke,
+.editable-editor .ql-toolbar .ql-picker-label:hover .ql-stroke,
+.editable-editor .ql-toolbar .ql-picker-item:hover .ql-stroke,
+.editable-editor .ql-toolbar .ql-picker-item.ql-selected .ql-stroke {
+  stroke: var(--accent);
+}
+.editable-editor .ql-toolbar button:hover .ql-fill,
+.editable-editor .ql-toolbar button.ql-active .ql-fill {
+  fill: var(--accent);
+}
+.editable-editor .ql-toolbar button:hover,
+.editable-editor .ql-toolbar button.ql-active,
+.editable-editor .ql-toolbar .ql-picker-label:hover,
+.editable-editor .ql-toolbar .ql-picker-label.ql-active,
+.editable-editor .ql-toolbar .ql-picker-item:hover,
+.editable-editor .ql-toolbar .ql-picker-item.ql-selected {
+  color: var(--accent);
+}
+.editable-editor .ql-toolbar .ql-picker-options {
+  background: var(--bg);
+  border-color: var(--border);
+  box-shadow: 0 8px 24px -8px rgba(45, 42, 38, 0.35);
+}
+/* Font-size picker: show the pixel value instead of Snow's Small/Normal/… */
+.editable-editor .ql-picker.ql-size .ql-picker-label::before,
+.editable-editor .ql-picker.ql-size .ql-picker-item::before {
+  content: attr(data-value) !important;
+}
+.editable-editor .ql-picker.ql-size .ql-picker-label:not([data-value])::before {
+  content: 'Size' !important;
+}
+.editable-editor .ql-picker.ql-size .ql-picker-item:not([data-value])::before {
+  content: 'Normal' !important;
+}
+/* Font picker: "Font" when nothing is set; wide enough for the names. */
+.editable-editor .ql-picker.ql-font {
+  width: 130px;
+}
+.editable-editor .ql-picker.ql-font .ql-picker-label:not([data-value])::before {
+  content: 'Font' !important;
+}
+.editable-editor .ql-picker.ql-font .ql-picker-item:not([data-value])::before {
+  content: 'Default' !important;
+}
+/* Link tooltip inherits the site palette. */
+.editable-editor .ql-snow .ql-tooltip {
+  background: var(--bg);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: 0 8px 24px -8px rgba(45, 42, 38, 0.35);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  z-index: 61;
+}
+.editable-editor .ql-snow .ql-tooltip input[type='text'] {
+  border-color: var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+.editable-editor .ql-snow .ql-tooltip a {
+  color: var(--accent);
+}
+
+/* ---------- Display of stored rich text (admin and visitors) ---------- */
+
+/* Inline wrapper is layout-transparent so the parent's styles (an h1,
+   a nav link, a button) still govern the text. */
+span.rich-text {
+  display: contents;
+}
+.rich-text p {
+  margin: 0;
+}
+.rich-text p + p,
+.rich-text p + h1, .rich-text p + h2, .rich-text p + h3,
+.rich-text h1 + p, .rich-text h2 + p, .rich-text h3 + p,
+.rich-text p + ol, .rich-text ol + p {
+  margin-top: 0.75em;
+}
+.rich-text h1, .rich-text h2, .rich-text h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+.rich-text ol {
+  margin: 0;
+  padding-left: 1.5em;
+}
+/* Quill 2 emits <ol> for both list kinds and marks bullets on the <li>. */
+.rich-text li[data-list='bullet'] {
+  list-style-type: disc;
+}
+.rich-text .ql-align-center { text-align: center; }
+.rich-text .ql-align-right { text-align: right; }
+.rich-text .ql-align-justify { text-align: justify; }
+.rich-text a {
+  color: var(--accent);
+  text-decoration: underline;
 }

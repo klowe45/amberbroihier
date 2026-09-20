@@ -6,6 +6,7 @@ import BlogManager from './admin/BlogManager.jsx'
 import VideoManager from './admin/VideoManager.jsx'
 import BookingInbox from './admin/BookingInbox.jsx'
 import './Admin.css'
+import { stripHtml } from '../lib/richText.js'
 
 const TABS = [
   { id: 'bookings', label: 'Inquiries' },
@@ -52,7 +53,7 @@ export default function Admin() {
             className={`admin-tab ${tab === t.id ? 'active' : ''}`}
             onClick={() => setTab(t.id)}
           >
-            {(t.labelField && content[t.labelField]) || t.label}
+            {(t.labelField && stripHtml(content[t.labelField])) || t.label}
           </button>
         ))}
       </nav>

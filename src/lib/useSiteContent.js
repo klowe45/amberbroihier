@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { api } from './api.js'
 import { useEdit } from './EditContext.jsx'
 
@@ -9,6 +9,19 @@ import { useEdit } from './EditContext.jsx'
 // Re-fetches on any successful Publish from the EditContext (tracked
 // via the `publishTick` counter) so inline edits become the new
 // authoritative copy without a page reload.
+// Tiny shared store of the last-fetched DB map so leaf components
+// (EditableText's per-field size, for instance) can read a key without
+// each firing its own GET /api/content.
+let latest = {}
+const listeners = new Set()
+const subscribe = (fn) => {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+export function useContentValue(key) {
+  return useSyncExternalStore(subscribe, () => latest[key])
+}
+
 export function useSiteContent(fallback) {
   const [content, setContent] = useState(fallback)
   const [loading, setLoading] = useState(true)
@@ -20,6 +33,8 @@ export function useSiteContent(fallback) {
       .get('/api/content')
       .then((data) => {
         if (cancelled || !data) return
+        latest = data
+        listeners.forEach((fn) => fn())
         setContent({ ...fallback, ...data })
       })
       .catch(() => {

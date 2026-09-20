@@ -16,12 +16,6 @@
   line-height: 1.55;
 }
 
-.home-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
 /* Featured video block sits under the CTAs. The frame keeps its
    16:9 aspect ratio via aspect-ratio, and the iframe fills it. */
 .home-video {

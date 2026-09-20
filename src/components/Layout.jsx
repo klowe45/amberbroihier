@@ -27,6 +27,7 @@ const NAV_FALLBACK = {
   nav_home: 'Home',
   nav_about: 'About',
   nav_speaking: 'Speaking',
+  nav_prices: 'Prices',
   nav_writing: 'Writing',
   nav_inquiry: 'Inquiry',
   nav_admin: 'Admin',
@@ -92,6 +93,13 @@ export default function Layout() {
               <EditableText
                 field="nav_speaking"
                 value={content.nav_speaking}
+                enabled={navEditMode}
+              />
+            </NavLink>
+            <NavLink to="/prices">
+              <EditableText
+                field="nav_prices"
+                value={content.nav_prices}
                 enabled={navEditMode}
               />
             </NavLink>
