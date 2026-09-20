@@ -1,6 +1,7 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
 import InquiryForm from '../components/InquiryForm.jsx'
 import EditableText from '../components/EditableText.jsx'
+import Adjustable from '../components/Adjustable.jsx'
 import CustomBlocks from '../components/CustomBlocks.jsx'
 import './Book.css'
 
@@ -17,12 +18,17 @@ export default function Inquiry() {
   return (
     <div className="container book">
       <div className="book-intro">
+        <Adjustable id="inquiry_eyebrow" content={content}>
         <p className="eyebrow">
           <EditableText field="inquiry_eyebrow" value={content.inquiry_eyebrow} />
         </p>
+        </Adjustable>
+        <Adjustable id="inquiry_headline" content={content}>
         <h1>
           <EditableText field="inquiry_headline" value={content.inquiry_headline} />
         </h1>
+        </Adjustable>
+        <Adjustable id="inquiry_lede" content={content}>
         <p className="book-lede">
           <EditableText
             field="inquiry_lede"
@@ -30,6 +36,7 @@ export default function Inquiry() {
             multiline
           />
         </p>
+        </Adjustable>
       </div>
       <InquiryForm />
       <CustomBlocks page="inquiry" content={content} />

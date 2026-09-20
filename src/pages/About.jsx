@@ -1,5 +1,6 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
 import EditableText from '../components/EditableText.jsx'
+import Adjustable from '../components/Adjustable.jsx'
 import CustomBlocks from '../components/CustomBlocks.jsx'
 import './About.css'
 
@@ -20,12 +21,16 @@ export default function About() {
   return (
     <div className="container about">
       <div className="prose">
+        <Adjustable id="about_eyebrow" content={content}>
         <p className="eyebrow">
           <EditableText field="about_eyebrow" value={content.about_eyebrow} />
         </p>
+        </Adjustable>
+        <Adjustable id="about_headline" content={content}>
         <h1>
           <EditableText field="about_headline" value={content.about_headline} />
         </h1>
+        </Adjustable>
         <p>
           <EditableText field="about_p1" value={content.about_p1} multiline />
         </p>

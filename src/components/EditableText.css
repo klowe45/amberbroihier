@@ -223,13 +223,46 @@
 }
 /* Font picker: "Font" when nothing is set; wide enough for the names. */
 .editable-editor .ql-picker.ql-font {
-  width: 130px;
+  width: 150px;
 }
+.editable-editor .ql-picker.ql-font .ql-picker-options {
+  width: max-content;
+  min-width: 100%;
+}
+/* With nothing set, the label/default item name the inherited font
+   (data-default-label is filled in by installToolbarExtras). */
 .editable-editor .ql-picker.ql-font .ql-picker-label:not([data-value])::before {
-  content: 'Font' !important;
+  content: attr(data-default-label) !important;
 }
 .editable-editor .ql-picker.ql-font .ql-picker-item:not([data-value])::before {
-  content: 'Default' !important;
+  content: attr(data-default-label) !important;
+}
+/* Typed size box beside the Size dropdown. */
+.editable-editor .ql-toolbar .ql-size-input {
+  width: 3.6em;
+  height: 24px;
+  margin-left: 2px;
+  padding: 0 4px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.editable-editor .ql-toolbar .ql-size-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.editable-editor .ql-toolbar .ql-size-input::-webkit-inner-spin-button,
+.editable-editor .ql-toolbar .ql-size-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.editable-editor .ql-toolbar .ql-size-input {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 /* Link tooltip inherits the site palette. */
 .editable-editor .ql-snow .ql-tooltip {

@@ -1,5 +1,6 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
 import EditableText from '../components/EditableText.jsx'
+import Adjustable from '../components/Adjustable.jsx'
 import './Prices.css'
 
 // Amber's products / services with pricing. The whole thing is one big
@@ -20,17 +21,24 @@ export default function Prices() {
   return (
     <div className="container prices">
       <div className="prices-intro">
+        <Adjustable id="prices_eyebrow" content={content}>
         <p className="eyebrow">
           <EditableText field="prices_eyebrow" value={content.prices_eyebrow} />
         </p>
+        </Adjustable>
+        <Adjustable id="prices_headline" content={content}>
         <h1>
           <EditableText field="prices_headline" value={content.prices_headline} />
         </h1>
+        </Adjustable>
+        <Adjustable id="prices_lede" content={content}>
         <p className="prices-lede">
           <EditableText field="prices_lede" value={content.prices_lede} multiline />
         </p>
+        </Adjustable>
       </div>
 
+      <Adjustable id="prices_body" content={content}>
       <section className="prices-body">
         <EditableText
           as="div"
@@ -41,6 +49,7 @@ export default function Prices() {
           className="prices-text"
         />
       </section>
+      </Adjustable>
     </div>
   )
 }

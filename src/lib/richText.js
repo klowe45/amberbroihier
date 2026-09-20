@@ -11,10 +11,15 @@ import { FONTS } from './theme.js'
 
 const Quill = ReactQuill.Quill
 
-// Font size as an inline style so it survives outside the editor.
+// Font size as an inline style so it survives outside the editor. Any
+// whole pixel value from 8 to 120 is allowed (typed into the toolbar's
+// size box); the dropdown just offers the common steps.
+export const MIN_SIZE = 8
+export const MAX_SIZE = 120
 const Size = Quill.import('attributors/style/size')
-Size.whitelist = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '40px']
+Size.whitelist = Array.from({ length: MAX_SIZE - MIN_SIZE + 1 }, (_, i) => `${i + MIN_SIZE}px`)
 Quill.register(Size, true)
+const SIZE_PRESETS = [12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 72, 96, 120].map((n) => `${n}px`)
 
 // Font family as a class (`ql-font-<id>`), using the same curated list
 // as the theme editor so the two stay in step. The matching CSS rules
@@ -69,6 +74,76 @@ export function ensureFontsFor(html) {
 // while Amber is editing.
 export function preloadAllFonts() {
   loadFamilies(FONTS.filter((f) => f.google).map((f) => f.google))
+}
+
+// Extras the stock toolbar can't express, added once the editor exists:
+//  - the Font picker's "default" entry shows which font the field is
+//    actually inheriting (from the theme) instead of the word Default;
+//  - a small text box next to the Size dropdown to type any px value.
+const firstFamily = (stack) => stack.split(',')[0].replace(/["']/g, '').trim().toLowerCase()
+
+export function installToolbarExtras(quill) {
+  const bar = quill.getModule('toolbar')?.container
+  if (!bar) return
+
+  // Default-font label.
+  const inherited = getComputedStyle(quill.root).fontFamily
+  const match = FONTS.find((f) => firstFamily(f.stack) === firstFamily(inherited))
+  const name = match ? match.label : inherited.split(',')[0].replace(/["']/g, '').trim()
+  const fontLabel = bar.querySelector('.ql-picker.ql-font .ql-picker-label')
+  const fontDefault = bar.querySelector('.ql-picker.ql-font .ql-picker-item:not([data-value])')
+  if (fontLabel) {
+    fontLabel.dataset.defaultLabel = name
+    fontLabel.style.fontFamily = inherited
+  }
+  if (fontDefault) {
+    fontDefault.dataset.defaultLabel = `${name} (default)`
+    fontDefault.style.fontFamily = inherited
+  }
+
+  // Typed font size.
+  if (bar.querySelector('.ql-size-input')) return
+  const group = bar.querySelector('.ql-picker.ql-size')?.closest('.ql-formats') ?? bar
+  const input = document.createElement('input')
+  input.type = 'number'
+  input.className = 'ql-size-input'
+  input.min = String(MIN_SIZE)
+  input.max = String(MAX_SIZE)
+  input.step = '1'
+  input.placeholder = 'px'
+  input.title = `Font size in px (${MIN_SIZE}–${MAX_SIZE})`
+  input.setAttribute('aria-label', 'Font size in pixels')
+  group.appendChild(input)
+
+  const apply = () => {
+    const n = Math.round(Number(input.value))
+    if (!n) return
+    const px = Math.min(MAX_SIZE, Math.max(MIN_SIZE, n))
+    input.value = String(px)
+    // format() restores the editor's saved selection (lost when the
+    // input took focus) before applying.
+    quill.format('size', `${px}px`, 'user')
+  }
+  input.addEventListener('keydown', (e) => {
+    e.stopPropagation()
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      apply()
+      quill.focus()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      quill.focus()
+    }
+  })
+  input.addEventListener('change', apply)
+  // Mirror the size under the cursor / selection into the box.
+  quill.on('editor-change', () => {
+    if (document.activeElement === input) return
+    const range = quill.getSelection()
+    if (!range) return
+    const v = quill.getFormat(range).size
+    input.value = typeof v === 'string' ? String(parseInt(v, 10) || '') : ''
+  })
 }
 
 // Quill's snow theme looks up toolbar button SVGs by name; undo/redo
@@ -126,7 +201,7 @@ export const singleLineModules = {
       ['undo', 'redo'],
       ['bold', 'italic', 'underline'],
       [{ font: [false, ...Font.whitelist] }],
-      [{ size: [false, ...Size.whitelist] }],
+      [{ size: [false, ...SIZE_PRESETS] }],
       ['link', 'clean'],
     ],
     handlers,
@@ -141,7 +216,7 @@ export const multilineModules = {
       [{ header: [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
       [{ font: [false, ...Font.whitelist] }],
-      [{ size: [false, ...Size.whitelist] }],
+      [{ size: [false, ...SIZE_PRESETS] }],
       [{ align: [] }],
       [{ list: 'ordered' }, { list: 'bullet' }],
       ['link', 'clean'],

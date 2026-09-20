@@ -14,6 +14,7 @@ import {
   fromEditorHtml,
   ensureFontsFor,
   preloadAllFonts,
+  installToolbarExtras,
 } from '../lib/richText.js'
 import './EditableText.css'
 
@@ -142,6 +143,7 @@ export default function EditableText({
     const t = setTimeout(() => {
       const quill = quillRef.current?.getEditor?.()
       if (!quill) return
+      installToolbarExtras(quill)
       quill.focus()
       quill.setSelection(quill.getLength(), 0)
       // Toolbar floats above the field. If that runs off the right edge

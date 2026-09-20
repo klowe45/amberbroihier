@@ -6,6 +6,7 @@ import { useConfirm } from '../lib/ConfirmContext.jsx'
 import { useSiteContent } from '../lib/useSiteContent.js'
 import { toEmbedUrl } from '../lib/embedUrl.js'
 import EditableText from '../components/EditableText.jsx'
+import Adjustable from '../components/Adjustable.jsx'
 import CustomBlocks from '../components/CustomBlocks.jsx'
 import './Speaking.css'
 
@@ -58,15 +59,20 @@ export default function Speaking() {
   return (
     <div className="container speaking">
       <div className="speaking-intro">
+        <Adjustable id="speaking_eyebrow" content={content}>
         <p className="eyebrow">
           <EditableText field="speaking_eyebrow" value={content.speaking_eyebrow} />
         </p>
+        </Adjustable>
+        <Adjustable id="speaking_headline" content={content}>
         <h1>
           <EditableText
             field="speaking_headline"
             value={content.speaking_headline}
           />
         </h1>
+        </Adjustable>
+        <Adjustable id="speaking_lede" content={content}>
         <p className="speaking-lede">
           <EditableText
             field="speaking_lede"
@@ -74,6 +80,7 @@ export default function Speaking() {
             multiline
           />
         </p>
+        </Adjustable>
       </div>
 
       {videos.length > 0 && (

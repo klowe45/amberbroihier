@@ -1,6 +1,7 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
 import BookingForm from '../components/BookingForm.jsx'
 import EditableText from '../components/EditableText.jsx'
+import Adjustable from '../components/Adjustable.jsx'
 import CustomBlocks from '../components/CustomBlocks.jsx'
 import './Book.css'
 
@@ -19,12 +20,17 @@ export default function Book() {
   return (
     <div className="container book">
       <div className="book-intro">
+        <Adjustable id="book_eyebrow" content={content}>
         <p className="eyebrow">
           <EditableText field="book_eyebrow" value={content.book_eyebrow} />
         </p>
+        </Adjustable>
+        <Adjustable id="book_headline" content={content}>
         <h1>
           <EditableText field="book_headline" value={content.book_headline} />
         </h1>
+        </Adjustable>
+        <Adjustable id="book_lede" content={content}>
         <p className="book-lede">
           <EditableText
             field="book_lede"
@@ -32,6 +38,7 @@ export default function Book() {
             multiline
           />
         </p>
+        </Adjustable>
         <p className="book-email-line">
           <EditableText
             field="book_email_line"
