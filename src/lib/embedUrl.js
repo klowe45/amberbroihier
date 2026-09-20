@@ -20,3 +20,7 @@ export function toEmbedUrl(url) {
     return null
   }
 }
+
+// A direct link to a video file — played with <video> rather than an
+// embedded third-party player.
+export const isVideoFileUrl = (u) => /\.(mp4|webm|mov|m4v|ogv)(\?.*)?$/i.test(u || '')

@@ -59,9 +59,10 @@ export default function Layout() {
     return () => document.removeEventListener('pointerdown', onDown)
   }, [menuOpen])
 
-  // Add a free-positioned image near the top-left of the content; Amber drags
-  // it wherever she likes over the page. Rides the normal Publish flow.
-  const addImage = (src) => {
+  // Add a free-positioned image or video near the top-left of the content;
+  // Amber drags it wherever she likes over the page. Rides the normal
+  // Publish flow. Videos start wider so the player is usable.
+  const addImage = ({ type, src }) => {
     if (!pageKey || !src) return
     const listKey = `images_${pageKey}`
     let list = []
@@ -69,7 +70,10 @@ export default function Layout() {
       const parsed = JSON.parse(pending[listKey] ?? content[listKey] ?? '[]')
       if (Array.isArray(parsed)) list = parsed
     } catch { /* start fresh */ }
-    set(listKey, JSON.stringify([...list, { id: genImgId(), src, x: 24, y: 24, w: 320 }]))
+    const item = type === 'video'
+      ? { id: genImgId(), type: 'video', src, x: 24, y: 24, w: 480 }
+      : { id: genImgId(), src, x: 24, y: 24, w: 320 }
+    set(listKey, JSON.stringify([...list, item]))
     setAddImageOpen(false)
   }
 
@@ -144,8 +148,8 @@ export default function Layout() {
                 type="button"
                 className="theme-gear image-add-btn"
                 onClick={() => setAddImageOpen(true)}
-                aria-label="Add an image to this page"
-                title="Add image"
+                aria-label="Add an image or video to this page"
+                title="Add image or video"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="3" y="3" width="18" height="18" rx="2" />

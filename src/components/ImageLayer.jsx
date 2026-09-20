@@ -1,12 +1,14 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
+import { isVideoFileUrl } from '../lib/embedUrl.js'
 import './ImageLayer.css'
 
 // Free-positioned images Amber can drag ANYWHERE over the page — with SEPARATE
 // staged positions for desktop and mobile, since one px coordinate can't be
 // right for both widths. Each image is stored in site_content under
-// `images_<page>` as { id, src, x, y, w, mx, my, mw }: x/y/w are the desktop
+// `images_<page>` as { id, src, x, y, w, mx, my, mw } (+ type: 'video' for an
+// embedded YouTube/Vimeo player or a video file): x/y/w are the desktop
 // placement; mx/my/mw the mobile placement (falling back to desktop until set).
 // You edit whichever view the browser is currently showing, so moving it on one
 // never disturbs the other. Persists on Publish.
@@ -103,12 +105,39 @@ export default function ImageLayer({ page, content = {} }) {
             className="image-item"
             style={{ left: p.x, top: p.y, width: p.w }}
           >
-            <img
-              src={img.src}
-              alt=""
-              draggable={false}
-              onPointerDown={(e) => startGesture(e, img, 'move')}
-            />
+            {img.type === 'video' ? (
+              <div className="image-video">
+                {/* A player swallows pointer events, so the admin drag handle
+                    is a bar across the top; the player itself stays usable. */}
+                {isAdmin && (
+                  <div
+                    className="image-video-handle"
+                    onPointerDown={(e) => startGesture(e, img, 'move')}
+                    title="Drag to move"
+                  >
+                    ⠿ drag to move
+                  </div>
+                )}
+                {isVideoFileUrl(img.src) ? (
+                  <video src={img.src} controls playsInline preload="metadata" />
+                ) : (
+                  <iframe
+                    src={img.src}
+                    title="Video"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )}
+              </div>
+            ) : (
+              <img
+                src={img.src}
+                alt=""
+                draggable={false}
+                onPointerDown={(e) => startGesture(e, img, 'move')}
+              />
+            )}
             {isAdmin && (
               <>
                 <span className="image-view-badge">{isMobile ? 'Mobile' : 'Desktop'}</span>
@@ -116,8 +145,8 @@ export default function ImageLayer({ page, content = {} }) {
                   type="button"
                   className="image-remove"
                   onClick={() => remove(img.id)}
-                  aria-label="Remove image"
-                  title="Remove image"
+                  aria-label={img.type === 'video' ? 'Remove video' : 'Remove image'}
+                  title={img.type === 'video' ? 'Remove video' : 'Remove image'}
                 >
                   ×
                 </button>

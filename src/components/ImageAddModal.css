@@ -112,3 +112,27 @@
   color: var(--text-muted);
   line-height: 1.5;
 }
+
+/* Image | Video switch under the title. */
+.imgadd-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.imgadd-tabs button {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  padding: 0.45rem 0.8rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.imgadd-tabs button:hover { color: var(--text); }
+.imgadd-tabs button.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
