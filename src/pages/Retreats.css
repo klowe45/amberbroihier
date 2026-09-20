@@ -1,0 +1,32 @@
+.retreats {
+  padding: 3rem 1.5rem 5rem;
+}
+
+.retreats-intro {
+  max-width: var(--max-prose);
+  margin: 0 0 2.5rem;
+}
+
+.retreats-lede {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.retreats-body {
+  max-width: var(--max-prose);
+  border-top: 1px solid var(--border);
+  padding-top: 2.5rem;
+}
+
+/* One big free-form block. Reads as body prose; honors the line breaks
+   Amber types so she can lay out items / retreats however she likes. */
+.retreats-text {
+  display: block;
+  min-height: 12rem;
+  white-space: pre-wrap;
+  font-family: var(--sans);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--text);
+}

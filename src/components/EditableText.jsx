@@ -21,8 +21,8 @@ import {
   installButtonDrag,
   replaceButton,
   INSERT_BLOCKS,
-  SITE_PAGES,
 } from '../lib/richText.js'
+import { useSitePages } from '../lib/navPages.js'
 import './EditableText.css'
 
 // Wraps a piece of site_content copy. When Amber is signed in as
@@ -464,6 +464,8 @@ export default function EditableText({
 // Label + destination for a call-to-action button. Destination is one of
 // the site's pages, or any URL.
 function ButtonDialog({ initial, onCancel, onSave, onRemove }) {
+  // Destinations are the header tabs, with whatever Amber has named them.
+  const SITE_PAGES = useSitePages()
   const known = initial && SITE_PAGES.some((p) => p.path === initial.href)
   const [label, setLabel] = useState(initial?.label || 'Learn more')
   const [page, setPage] = useState(initial ? (known ? initial.href : '__custom') : SITE_PAGES[0].path)

@@ -4,6 +4,7 @@ import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
 import { useSiteContent } from '../lib/useSiteContent.js'
 import { applyTheme } from '../lib/theme.js'
+import { NAV_PAGES } from '../lib/navPages.js'
 import EditableText from './EditableText.jsx'
 import EditBar from './EditBar.jsx'
 import EditModeToggle from './EditModeToggle.jsx'
@@ -11,6 +12,8 @@ import ThemeSettings from './ThemeSettings.jsx'
 import ImageAddModal from './ImageAddModal.jsx'
 import ImageLayer from './ImageLayer.jsx'
 import Analytics from './Analytics.jsx'
+import SocialIcon from './SocialIcon.jsx'
+import { parseSocials, platformById, isSafeUrl } from '../lib/socials.js'
 import './Layout.css'
 
 const genImgId = () =>
@@ -25,12 +28,7 @@ function pageKeyFor(pathname) {
 
 const NAV_FALLBACK = {
   brand: 'Amber Broihier',
-  nav_home: 'Home',
-  nav_about: 'About',
-  nav_speaking: 'Speaking',
-  nav_prices: 'Prices',
-  nav_writing: 'Writing',
-  nav_inquiry: 'Inquiry',
+  ...Object.fromEntries(NAV_PAGES.map((p) => [p.key, p.fallback])),
   nav_admin: 'Admin',
   footer_contact_label: 'Contact',
   footer_contact_email: 'amberbroihier@gmail.com',
@@ -62,6 +60,9 @@ export default function Layout() {
     setAddImageOpen(false)
   }
 
+  // Footer social icons, from Admin → Socials.
+  const socials = parseSocials(content.socials).filter((s) => isSafeUrl(s.url))
+
   // Apply Amber's saved colors + fonts site-wide once the content loads
   // (and again whenever it changes after a publish).
   useEffect(() => { applyTheme(content) }, [content])
@@ -76,49 +77,23 @@ export default function Layout() {
           <Link to="/" className="brand">
             <EditableText field="brand" value={content.brand} />
           </Link>
+          {/* Dev server only: a reminder that edits here go to the dev
+              database, never the live site. Absent from production builds. */}
+          {import.meta.env.DEV && (
+            <span className="env-badge" title="This is the local dev server. Publishing here writes to the dev database, not amberbroihier.com.">
+              Local · dev data
+            </span>
+          )}
           <nav className="nav" aria-label="Main">
-            <NavLink to="/" end>
-              <EditableText
-                field="nav_home"
-                value={content.nav_home}
-                enabled={navEditMode}
-              />
-            </NavLink>
-            <NavLink to="/about">
-              <EditableText
-                field="nav_about"
-                value={content.nav_about}
-                enabled={navEditMode}
-              />
-            </NavLink>
-            <NavLink to="/speaking">
-              <EditableText
-                field="nav_speaking"
-                value={content.nav_speaking}
-                enabled={navEditMode}
-              />
-            </NavLink>
-            <NavLink to="/prices">
-              <EditableText
-                field="nav_prices"
-                value={content.nav_prices}
-                enabled={navEditMode}
-              />
-            </NavLink>
-            <NavLink to="/blog">
-              <EditableText
-                field="nav_writing"
-                value={content.nav_writing}
-                enabled={navEditMode}
-              />
-            </NavLink>
-            <NavLink to="/inquiry">
-              <EditableText
-                field="nav_inquiry"
-                value={content.nav_inquiry}
-                enabled={navEditMode}
-              />
-            </NavLink>
+            {NAV_PAGES.map((p) => (
+              <NavLink key={p.path} to={p.path} end={p.end}>
+                <EditableText
+                  field={p.key}
+                  value={content[p.key]}
+                  enabled={navEditMode}
+                />
+              </NavLink>
+            ))}
             {isAdmin && (
               <NavLink to="/admin">
                 <EditableText
@@ -195,6 +170,23 @@ export default function Layout() {
       <footer className="site-footer">
         <div className="container site-footer-inner">
           <p>© {new Date().getFullYear()} Amber Broihier</p>
+          {socials.length > 0 && (
+            <ul className="footer-socials" aria-label="Social links">
+              {socials.map((s) => (
+                <li key={s.id}>
+                  <a
+                    href={s.url}
+                    target={s.url.startsWith('mailto:') ? undefined : '_blank'}
+                    rel="noopener noreferrer"
+                    aria-label={platformById(s.platform)?.label || s.platform}
+                    title={platformById(s.platform)?.label || s.platform}
+                  >
+                    <SocialIcon platform={s.platform} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
           <p className="footer-links">
             <a href={`mailto:${content.footer_contact_email}`}>
               <EditableText

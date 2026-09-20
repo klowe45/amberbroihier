@@ -21,6 +21,10 @@ const subscribe = (fn) => {
 export function useContentValue(key) {
   return useSyncExternalStore(subscribe, () => latest[key])
 }
+// The whole saved map (new object identity after every fetch).
+export function useContentMap() {
+  return useSyncExternalStore(subscribe, () => latest)
+}
 
 export function useSiteContent(fallback) {
   const [content, setContent] = useState(fallback)

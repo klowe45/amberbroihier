@@ -107,16 +107,6 @@ class SiteButton extends BlockEmbed {
 }
 Quill.register(SiteButton, true)
 
-// Pages a button can point at (plus "custom URL" in the dialog).
-export const SITE_PAGES = [
-  { path: '/', label: 'Home' },
-  { path: '/about', label: 'About' },
-  { path: '/speaking', label: 'Speaking' },
-  { path: '/prices', label: 'Prices' },
-  { path: '/blog', label: 'Writing' },
-  { path: '/inquiry', label: 'Inquiry' },
-  { path: '/book', label: 'Book' },
-]
 
 // The "+" menu, in display order. Mirrors InfyNote's gutter plus, with a
 // Button entry on top.
