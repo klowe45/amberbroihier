@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api.js'
 
 // Tracks Amber's pending inline edits to site_content. Buffered client-
@@ -9,11 +9,18 @@ const EditContext = createContext({
   pending: {},
   isDirty: false,
   publishTick: 0,
+  canUndo: false,
+  canRedo: false,
   set: () => {},
+  undo: () => {},
+  redo: () => {},
   publish: async () => {},
   cancel: () => {},
   refresh: () => {},
 })
+
+// Undo history depth (snapshots of the pending map).
+const HISTORY_LIMIT = 100
 
 // localStorage key for the pending-edits buffer. Namespaced under the
 // same `ab-draft:` prefix as useDraft so every persisted-draft-thing
@@ -57,7 +64,30 @@ export function EditProvider({ children }) {
     }
   }, [pending])
 
+  // Undo/redo over the pending buffer. Each user action (a text commit,
+  // a drag, a block removal…) snapshots the buffer before it changes.
+  // Several set() calls from one handler — a drag writes space + shift,
+  // removing a block writes the list + its payload — are coalesced into
+  // one step by keeping the "batch" open until the current tick ends.
+  const pendingRef = useRef(pending)
+  pendingRef.current = pending
+  const undoStack = useRef([])
+  const redoStack = useRef([])
+  const batchOpen = useRef(false)
+  const [historyTick, setHistoryTick] = useState(0)
+
+  const snapshot = useCallback(() => {
+    if (batchOpen.current) return
+    batchOpen.current = true
+    undoStack.current.push(pendingRef.current)
+    if (undoStack.current.length > HISTORY_LIMIT) undoStack.current.shift()
+    redoStack.current = []
+    setTimeout(() => { batchOpen.current = false }, 0)
+    setHistoryTick((n) => n + 1)
+  }, [])
+
   const set = useCallback((key, value) => {
+    snapshot()
     setPending((prev) => {
       // Empty out entries whose new value equals the saved one? We
       // don't know the saved value here — the caller sends `null` /
@@ -70,9 +100,29 @@ export function EditProvider({ children }) {
       }
       return { ...prev, [key]: value }
     })
+  }, [snapshot])
+
+  const undo = useCallback(() => {
+    const prev = undoStack.current.pop()
+    if (!prev) return
+    redoStack.current.push(pendingRef.current)
+    setPending(prev)
+    setHistoryTick((n) => n + 1)
   }, [])
 
-  const cancel = useCallback(() => setPending({}), [])
+  const redo = useCallback(() => {
+    const next = redoStack.current.pop()
+    if (!next) return
+    undoStack.current.push(pendingRef.current)
+    setPending(next)
+    setHistoryTick((n) => n + 1)
+  }, [])
+
+  // Cancel is itself undoable — a mis-click shouldn't cost an hour of edits.
+  const cancel = useCallback(() => {
+    snapshot()
+    setPending({})
+  }, [snapshot])
 
   // Force useSiteContent subscribers to re-fetch — e.g. after the theme editor
   // saves directly to /api/content (bypassing the pending-edit publish path).
@@ -88,6 +138,10 @@ export function EditProvider({ children }) {
     try {
       await api.put('/api/content', { entries })
       setPending({})
+      // Published edits are in the DB now; undo can't take those back.
+      undoStack.current = []
+      redoStack.current = []
+      setHistoryTick((n) => n + 1)
       setPublishTick((n) => n + 1)
     } finally {
       setPublishing(false)
@@ -95,6 +149,25 @@ export function EditProvider({ children }) {
   }, [pending])
 
   const isDirty = Object.keys(pending).length > 0
+  // historyTick is read so these recompute after every push/pop.
+  const canUndo = historyTick >= 0 && undoStack.current.length > 0
+  const canRedo = historyTick >= 0 && redoStack.current.length > 0
+
+  // ⌘/Ctrl+Z and ⌘/Ctrl+Shift+Z page-wide, except while typing in an
+  // input or the rich-text editor (those have their own undo).
+  useEffect(() => {
+    const handler = (e) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return
+      const t = e.target
+      if (t && (t.isContentEditable || /^(input|textarea|select)$/i.test(t.tagName))) return
+      if (t?.closest?.('.ql-container, .ql-toolbar')) return
+      e.preventDefault()
+      if (e.shiftKey) redo()
+      else undo()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [undo, redo])
 
   // Warn on tab close / navigation if there are unsaved edits.
   useEffect(() => {
@@ -108,8 +181,8 @@ export function EditProvider({ children }) {
   }, [isDirty])
 
   const value = useMemo(
-    () => ({ pending, isDirty, publishing, publishTick, set, publish, cancel, refresh }),
-    [pending, isDirty, publishing, publishTick, set, publish, cancel, refresh]
+    () => ({ pending, isDirty, publishing, publishTick, canUndo, canRedo, set, undo, redo, publish, cancel, refresh }),
+    [pending, isDirty, publishing, publishTick, canUndo, canRedo, set, undo, redo, publish, cancel, refresh]
   )
 
   return <EditContext.Provider value={value}>{children}</EditContext.Provider>

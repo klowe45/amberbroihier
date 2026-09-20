@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import ReactQuill from 'react-quill-new'
 import 'react-quill-new/dist/quill.snow.css'
 import { useAuth } from '../lib/AuthContext.jsx'
@@ -15,6 +17,11 @@ import {
   ensureFontsFor,
   preloadAllFonts,
   installToolbarExtras,
+  insertBlock,
+  installButtonDrag,
+  replaceButton,
+  INSERT_BLOCKS,
+  SITE_PAGES,
 } from '../lib/richText.js'
 import './EditableText.css'
 
@@ -72,7 +79,17 @@ export default function EditableText({
 }) {
   const { isAdmin } = useAuth()
   const { pending, set } = useEdit()
+  const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
+  // Gutter "+" menu (multiline fields) and the Button dialog it can open.
+  const [menuOpen, setMenuOpen] = useState(false)
+  // Fixed-position anchor for the menu: below the + when there's room,
+  // otherwise above it. Set when the menu opens.
+  const [menuPos, setMenuPos] = useState(null)
+  const [buttonDialog, setButtonDialog] = useState(false)
+  // A block chosen from the "+" before the editor has mounted (the + also
+  // opens the editor); applied once the Quill instance exists.
+  const queuedInsert = useRef(null)
   // Saved box size (if Amber has dragged the corner), with a live
   // override while a drag is in progress.
   const sizeKey = `size_${field}`
@@ -140,12 +157,22 @@ export default function EditableText({
       commit: () => commitRef.current(),
       revert: () => revertRef.current(),
     }
+    let cleanupDrag = null
     const t = setTimeout(() => {
       const quill = quillRef.current?.getEditor?.()
       if (!quill) return
       installToolbarExtras(quill)
+      // Click a button in the editor to edit it; drag to move it.
+      cleanupDrag = installButtonDrag(quill, (index, initial) =>
+        setButtonDialog({ index, initial })
+      )
       quill.focus()
       quill.setSelection(quill.getLength(), 0)
+      if (queuedInsert.current) {
+        const { key, payload } = queuedInsert.current
+        queuedInsert.current = null
+        insertBlock(quill, key, payload)
+      }
       // Toolbar floats above the field. If that runs off the right edge
       // of the window, anchor it to the field's right side; if it ends up
       // off-screen or under the sticky header / edit bar, flip it below.
@@ -162,6 +189,7 @@ export default function EditableText({
     }, 0)
     return () => {
       clearTimeout(t)
+      cleanupDrag?.()
       delete host.__editable
     }
   }, [editing, multiline])
@@ -171,11 +199,23 @@ export default function EditableText({
   useEffect(() => {
     if (!editing) return
     const onDown = (e) => {
+      if (buttonDialog) return
+      if (e.target.closest?.('.editable-plus, .editable-plus-menu')) return
       if (wrapRef.current && !wrapRef.current.contains(e.target)) commitRef.current()
     }
     document.addEventListener('pointerdown', onDown, true)
     return () => document.removeEventListener('pointerdown', onDown, true)
-  }, [editing])
+  }, [editing, buttonDialog])
+
+  // Close the "+" menu on any click outside it.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e) => {
+      if (!e.target.closest?.('.editable-plus, .editable-plus-menu')) setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown, true)
+    return () => document.removeEventListener('pointerdown', onDown, true)
+  }, [menuOpen])
 
   // Corner-handle drag: live-preview the size, then write it to the
   // pending buffer on release. Double-click clears it (back to natural).
@@ -210,6 +250,30 @@ export default function EditableText({
     set(sizeKey, savedSizeRaw ? '' : null)
   }
 
+  // Pick from the "+": apply to the open editor, or open the editor and
+  // apply once it's ready.
+  const applyInsert = (key, payload) => {
+    setMenuOpen(false)
+    const quill = editing ? quillRef.current?.getEditor?.() : null
+    if (quill) insertBlock(quill, key, payload)
+    else {
+      queuedInsert.current = { key, payload }
+      if (!editing) startEditing()
+    }
+  }
+  const chooseBlock = (key) => {
+    if (key === 'button') { setMenuOpen(false); setButtonDialog(true); return }
+    applyInsert(key)
+  }
+
+  // Buttons that point inside the site use the router (no full reload).
+  const onDisplayClick = (e) => {
+    const a = e.target.closest?.('a.rt-button')
+    if (!a) return
+    const href = a.getAttribute('href') || ''
+    if (href.startsWith('/')) { e.preventDefault(); navigate(href) }
+  }
+
   // Inline content wrapper for the HTML branch (the pencil has to be a
   // sibling, so the markup can't go straight on the outer tag).
   const Inner = Tag === 'div' ? 'div' : 'span'
@@ -225,7 +289,7 @@ export default function EditableText({
 
   if (!isAdmin || !enabled) {
     return (
-      <Tag className={`${blockClass} ${className}`.trim()} style={sizeStyle}>
+      <Tag className={`${blockClass} ${className}`.trim()} style={sizeStyle} onClick={onDisplayClick}>
         {body || placeholder}
       </Tag>
     )
@@ -239,6 +303,72 @@ export default function EditableText({
     setEditing(true)
   }
 
+  // Gutter "+" (multiline fields only): inserts a block at the caret.
+  const plus = multiline && (
+    <>
+      <button
+        type="button"
+        className={`editable-plus${menuOpen ? ' is-open' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          if (menuOpen) { setMenuOpen(false); return }
+          const r = e.currentTarget.getBoundingClientRect()
+          const MENU_H = 480
+          const below = r.bottom + 6 + MENU_H <= window.innerHeight
+          setMenuPos(below
+            ? { left: r.left, top: r.bottom + 6 }
+            : { left: r.left, bottom: window.innerHeight - r.top + 6 })
+          setMenuOpen(true)
+        }}
+        aria-label="Insert a block"
+        aria-expanded={menuOpen}
+        title="Insert a block"
+      >
+        +
+      </button>
+      {menuOpen && (
+        <span className="editable-plus-menu" role="menu" style={menuPos ?? undefined}>
+          {INSERT_BLOCKS.map((b) => (
+            <button
+              key={b.key}
+              type="button"
+              role="menuitem"
+              className="editable-plus-item"
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); chooseBlock(b.key) }}
+            >
+              <span className="editable-plus-item-label">{b.label}</span>
+              <span className="editable-plus-item-hint">{b.hint}</span>
+            </button>
+          ))}
+        </span>
+      )}
+      {buttonDialog && createPortal(
+        <ButtonDialog
+          initial={buttonDialog.initial}
+          onCancel={() => setButtonDialog(false)}
+          onRemove={buttonDialog.initial ? () => {
+            const idx = buttonDialog.index
+            setButtonDialog(false)
+            const quill = quillRef.current?.getEditor?.()
+            if (quill) replaceButton(quill, idx, null)
+          } : undefined}
+          onSave={(payload) => {
+            const editingExisting = buttonDialog.initial ? buttonDialog.index : null
+            setButtonDialog(false)
+            if (editingExisting != null) {
+              const quill = quillRef.current?.getEditor?.()
+              if (quill) replaceButton(quill, editingExisting, payload)
+            } else {
+              applyInsert('button', payload)
+            }
+          }}
+        />,
+        document.body
+      )}
+    </>
+  )
+
   if (editing) {
     return (
       <div
@@ -249,6 +379,7 @@ export default function EditableText({
         // while Amber is clicking around in the toolbar.
         onClick={(e) => { e.stopPropagation(); e.preventDefault() }}
       >
+        {plus}
         <ReactQuill
           ref={quillRef}
           theme="snow"
@@ -276,6 +407,15 @@ export default function EditableText({
       onClick={(e) => {
         e.stopPropagation()
         e.preventDefault()
+        // A call-to-action button works for Amber too — click it to follow
+        // the link; click anywhere else in the box to edit.
+        const a = e.target.closest?.('a.rt-button')
+        if (a) {
+          const href = a.getAttribute('href') || ''
+          if (href.startsWith('/')) navigate(href)
+          else if (href) window.open(href, '_blank', 'noopener')
+          return
+        }
         startEditing()
       }}
       onKeyDown={(e) => {
@@ -290,6 +430,7 @@ export default function EditableText({
       {pencil && (
         <span className="editable-pencil" aria-hidden="true">✎</span>
       )}
+      {plus}
       {resizable && (
         <span
           className="editable-resize"
@@ -302,5 +443,70 @@ export default function EditableText({
         />
       )}
     </Tag>
+  )
+}
+
+// Label + destination for a call-to-action button. Destination is one of
+// the site's pages, or any URL.
+function ButtonDialog({ initial, onCancel, onSave, onRemove }) {
+  const known = initial && SITE_PAGES.some((p) => p.path === initial.href)
+  const [label, setLabel] = useState(initial?.label || 'Learn more')
+  const [page, setPage] = useState(initial ? (known ? initial.href : '__custom') : SITE_PAGES[0].path)
+  const [custom, setCustom] = useState(initial && !known ? initial.href : '')
+  const isCustom = page === '__custom'
+  const href = isCustom ? custom.trim() : page
+  const valid = label.trim() && (!isCustom || /^(https?:\/\/|mailto:|tel:|\/)/i.test(href))
+
+  const submit = (e) => {
+    e.preventDefault()
+    if (!valid) return
+    onSave({ label: label.trim(), href })
+  }
+
+  return (
+    <div className="confirm-overlay" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+      <form className="confirm-card editable-button-dialog" onSubmit={submit}>
+        <h2 className="confirm-title">{initial ? 'Edit button' : 'Add a button'}</h2>
+        <label className="editable-button-field">
+          <span>Button text</span>
+          <input
+            type="text"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            autoFocus
+            maxLength={60}
+          />
+        </label>
+        <label className="editable-button-field">
+          <span>Goes to</span>
+          <select value={page} onChange={(e) => setPage(e.target.value)}>
+            {SITE_PAGES.map((p) => (
+              <option key={p.path} value={p.path}>{p.label} page</option>
+            ))}
+            <option value="__custom">Custom link…</option>
+          </select>
+        </label>
+        {isCustom && (
+          <label className="editable-button-field">
+            <span>Link</span>
+            <input
+              type="text"
+              value={custom}
+              onChange={(e) => setCustom(e.target.value)}
+              placeholder="https://…"
+            />
+          </label>
+        )}
+        <div className="confirm-actions">
+          {onRemove && (
+            <button type="button" className="confirm-btn confirm-btn-ghost editable-button-remove" onClick={onRemove}>
+              Remove
+            </button>
+          )}
+          <button type="button" className="confirm-btn confirm-btn-ghost" onClick={onCancel}>Cancel</button>
+          <button type="submit" className="confirm-btn" disabled={!valid}>{initial ? 'Save' : 'Add button'}</button>
+        </div>
+      </form>
+    </div>
   )
 }

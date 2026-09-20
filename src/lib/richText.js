@@ -76,6 +76,236 @@ export function preloadAllFonts() {
   loadFamilies(FONTS.filter((f) => f.google).map((f) => f.google))
 }
 
+// ---- Blocks the gutter "+" can insert -----------------------------------
+
+// A horizontal rule. Stored as a bare <hr>.
+const BlockEmbed = Quill.import('blots/block/embed')
+class Divider extends BlockEmbed {
+  static blotName = 'divider'
+  static tagName = 'hr'
+}
+Quill.register(Divider, true)
+
+// A call-to-action button that links to another page (or any URL). Stored
+// as <a class="rt-button" href="…">Label</a>; matched back by class so the
+// ordinary link format doesn't claim it. Not editable inline — Amber sets
+// the label + destination in a small dialog.
+class SiteButton extends BlockEmbed {
+  static blotName = 'site-button'
+  static tagName = 'a'
+  static className = 'rt-button'
+  static create(value) {
+    const node = super.create()
+    node.setAttribute('href', value?.href || '#')
+    node.textContent = value?.label || 'Button'
+    node.setAttribute('contenteditable', 'false')
+    return node
+  }
+  static value(node) {
+    return { href: node.getAttribute('href') || '#', label: node.textContent || '' }
+  }
+}
+Quill.register(SiteButton, true)
+
+// Pages a button can point at (plus "custom URL" in the dialog).
+export const SITE_PAGES = [
+  { path: '/', label: 'Home' },
+  { path: '/about', label: 'About' },
+  { path: '/speaking', label: 'Speaking' },
+  { path: '/prices', label: 'Prices' },
+  { path: '/blog', label: 'Writing' },
+  { path: '/inquiry', label: 'Inquiry' },
+  { path: '/book', label: 'Book' },
+]
+
+// The "+" menu, in display order. Mirrors InfyNote's gutter plus, with a
+// Button entry on top.
+export const INSERT_BLOCKS = [
+  { key: 'text', label: 'Text', hint: 'Plain paragraph' },
+  { key: 'h1', label: 'Heading 1', hint: 'Section title' },
+  { key: 'h2', label: 'Heading 2', hint: 'Sub-section' },
+  { key: 'h3', label: 'Heading 3', hint: 'Smaller heading' },
+  { key: 'bullet', label: 'Bulleted list', hint: 'A simple list' },
+  { key: 'number', label: 'Numbered list', hint: 'An ordered list' },
+  { key: 'todo', label: 'To-do list', hint: 'A checklist you can tick' },
+  { key: 'table', label: 'Table', hint: 'Two rows, three columns' },
+  { key: 'quote', label: 'Quote', hint: 'Set text apart' },
+  { key: 'divider', label: 'Divider', hint: 'A line across the page' },
+  { key: 'button', label: 'Button', hint: 'Link to another page' },
+]
+
+// Where the caret is, or the end of the document when the editor has no
+// selection yet (e.g. the "+" was clicked before typing anywhere).
+const caretOf = (quill) => quill.getSelection(true)?.index ?? Math.max(0, quill.getLength() - 1)
+
+// A block dropped into the middle of a table would split it in two, so when
+// the caret is inside a cell the insertion moves to just after the table.
+function outsideTable(quill, index) {
+  const [line] = quill.getLine(index)
+  const tableEl = line?.domNode?.closest?.('table')
+  if (!tableEl) return index
+  const table = Quill.find(tableEl)
+  if (!table) return index
+  const after = quill.getIndex(table) + table.length()
+  // Make sure there's a line after the table to land on.
+  if (after >= quill.getLength()) quill.insertText(after, '\n', 'silent')
+  quill.setSelection(after, 0, 'silent')
+  return after
+}
+
+// Line-level formats apply to the caret's line (like InfyNote's formatBlock);
+// embeds and tables go in at the caret.
+export function insertBlock(quill, key, payload) {
+  const index = outsideTable(quill, caretOf(quill))
+  switch (key) {
+    case 'text':
+      quill.formatLine(index, 1, { header: false, list: false, blockquote: false }, 'user')
+      break
+    case 'h1': case 'h2': case 'h3':
+      quill.formatLine(index, 1, 'header', Number(key[1]), 'user')
+      break
+    case 'bullet':
+      quill.formatLine(index, 1, 'list', 'bullet', 'user')
+      break
+    case 'number':
+      quill.formatLine(index, 1, 'list', 'ordered', 'user')
+      break
+    case 'todo':
+      quill.formatLine(index, 1, 'list', 'unchecked', 'user')
+      break
+    case 'quote':
+      quill.formatLine(index, 1, 'blockquote', true, 'user')
+      break
+    case 'table':
+      quill.setSelection(index, 0, 'silent')
+      quill.getModule('table')?.insertTable(2, 3)
+      break
+    case 'divider':
+      quill.insertEmbed(index, 'divider', true, 'user')
+      quill.setSelection(index + 1, 0, 'silent')
+      break
+    case 'button':
+      quill.insertEmbed(index, 'site-button', payload, 'user')
+      quill.setSelection(index + 1, 0, 'silent')
+      break
+    default:
+      return
+  }
+  quill.focus()
+}
+
+// Move a block (by document index) to a new spot, optionally setting its
+// alignment. Used for dragging an inserted button around the box.
+function moveBlockEmbed(quill, fromIndex, toIndex, align) {
+  const [blot] = quill.getLine(fromIndex)
+  if (!blot || !blot.statics?.blotName) return
+  const name = blot.statics.blotName
+  const value = blot.statics.value ? blot.statics.value(blot.domNode) : true
+  let to = toIndex
+  quill.deleteText(fromIndex, 1, 'user')
+  if (to > fromIndex) to -= 1
+  quill.insertEmbed(to, name, value, 'user')
+  quill.formatLine(to, 1, 'align', align || false, 'user')
+  quill.setSelection(to, 1, 'silent')
+}
+
+// Buttons inside the editor: click to edit (label / destination), drag to
+// move — vertically between lines, and the horizontal drop position sets
+// the alignment (left / centre / right thirds of the box). Returns a
+// cleanup function.
+export function installButtonDrag(quill, onClickButton) {
+  const root = quill.root
+  const DRAG_THRESHOLD = 4
+  let indicator = null
+  const clearIndicator = () => {
+    if (indicator) indicator.classList.remove('rt-drop-before', 'rt-drop-after')
+    indicator = null
+  }
+
+  // The line under the pointer and whether the drop goes before or after it.
+  const dropTarget = (x, y) => {
+    const el = document.elementFromPoint(x, y)
+    const line = el && root.contains(el)
+      ? el.closest('.ql-editor p, .ql-editor h1, .ql-editor h2, .ql-editor h3, .ql-editor li, .ql-editor blockquote, .ql-editor hr, .ql-editor a.rt-button, .ql-editor table')
+      : null
+    if (!line || !root.contains(line)) {
+      // Blank space (or outside): before the first line if above, else the end.
+      const r = root.getBoundingClientRect()
+      const first = root.firstElementChild
+      if (y < r.top && first) return { el: first, before: true }
+      return { el: null, before: false }
+    }
+    const r = line.getBoundingClientRect()
+    return { el: line, before: y < r.top + r.height / 2 }
+  }
+
+  const onPointerDown = (e) => {
+    const btn = e.target.closest?.('a.rt-button')
+    if (!btn || e.button !== 0) return
+    e.preventDefault()
+    const startX = e.clientX
+    const startY = e.clientY
+    let dragging = false
+    const move = (ev) => {
+      if (!dragging) {
+        if (Math.abs(ev.clientX - startX) < DRAG_THRESHOLD && Math.abs(ev.clientY - startY) < DRAG_THRESHOLD) return
+        dragging = true
+        btn.classList.add('rt-dragging')
+        root.classList.add('rt-drag-active')
+      }
+      clearIndicator()
+      const t = dropTarget(ev.clientX, ev.clientY)
+      if (t.el && t.el !== btn) {
+        indicator = t.el
+        indicator.classList.add(t.before ? 'rt-drop-before' : 'rt-drop-after')
+      }
+    }
+    const up = (ev) => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      clearIndicator()
+      btn.classList.remove('rt-dragging')
+      root.classList.remove('rt-drag-active')
+      const blot = Quill.find(btn)
+      if (!blot) return
+      const fromIndex = quill.getIndex(blot)
+      if (!dragging) {
+        onClickButton?.(fromIndex, SiteButton.value(btn))
+        return
+      }
+      const t = dropTarget(ev.clientX, ev.clientY)
+      let toIndex
+      if (!t.el) toIndex = quill.getLength() - 1
+      else {
+        const target = Quill.find(t.el)
+        if (!target) return
+        toIndex = quill.getIndex(target) + (t.before ? 0 : target.length())
+      }
+      const r = root.getBoundingClientRect()
+      const rel = (ev.clientX - r.left) / r.width
+      const align = rel < 1 / 3 ? false : rel < 2 / 3 ? 'center' : 'right'
+      moveBlockEmbed(quill, fromIndex, toIndex, align)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
+
+  root.addEventListener('pointerdown', onPointerDown)
+  return () => root.removeEventListener('pointerdown', onPointerDown)
+}
+
+// Replace the button at `index` with new label/destination, or remove it.
+export function replaceButton(quill, index, payload) {
+  const [blot] = quill.getLine(index)
+  const align = blot?.domNode?.className?.match(/ql-align-(\w+)/)?.[1] || false
+  quill.deleteText(index, 1, 'user')
+  if (payload) {
+    quill.insertEmbed(index, 'site-button', payload, 'user')
+    quill.formatLine(index, 1, 'align', align, 'user')
+  }
+  quill.setSelection(index, 0, 'silent')
+}
+
 // Extras the stock toolbar can't express, added once the editor exists:
 //  - the Font picker's "default" entry shows which font the field is
 //    actually inheriting (from the theme) instead of the word Default;
@@ -85,6 +315,20 @@ const firstFamily = (stack) => stack.split(',')[0].replace(/["']/g, '').trim().t
 export function installToolbarExtras(quill) {
   const bar = quill.getModule('toolbar')?.container
   if (!bar) return
+
+  // Keep the editor's highlight while using the toolbar. Quill's pickers
+  // (Size, Font, heading, align) take focus on mousedown, which blanks
+  // the selection until the value is applied — it looked like the
+  // highlight was lost. Swallowing the default keeps focus in the editor;
+  // the pickers still open (they listen for mousedown, not focus). The
+  // typed-size box is the one thing that genuinely needs focus.
+  if (!bar.__keepSelection) {
+    bar.__keepSelection = true
+    bar.addEventListener('mousedown', (e) => {
+      if (e.target.closest('input, textarea')) return
+      e.preventDefault()
+    })
+  }
 
   // Default-font label.
   const inherited = getComputedStyle(quill.root).fontFamily
@@ -224,19 +468,22 @@ export const multilineModules = {
     handlers,
   },
   keyboard: { bindings },
+  table: true,
 }
 
 export const richFormats = [
   'header', 'bold', 'italic', 'underline', 'font', 'size', 'align', 'list', 'link',
+  'blockquote', 'table', 'divider', 'site-button',
 ]
 
 const ALLOWED_TAGS = [
   'p', 'br', 'strong', 'em', 'u', 's', 'a', 'ol', 'ul', 'li',
   'h1', 'h2', 'h3', 'blockquote', 'span', 'sub', 'sup',
+  'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
 ]
 // `style` carries font-size; `class` carries ql-align-*; `data-list`
 // tells bullet <li>s apart from numbered ones (Quill 2 uses <ol> for both).
-const ALLOWED_ATTR = ['href', 'target', 'rel', 'class', 'style', 'data-list']
+const ALLOWED_ATTR = ['href', 'target', 'rel', 'class', 'style', 'data-list', 'data-row']
 
 export const looksLikeHtml = (s) => /<[a-z][\s\S]*>/i.test(s ?? '')
 

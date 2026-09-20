@@ -5,8 +5,9 @@ import Adjustable from '../components/Adjustable.jsx'
 import './Home.css'
 
 const FALLBACK = {
-  // The hero eyebrow is the site name — it shares the `brand` field with the
-  // header, so editing it here live-updates the header (and vice-versa).
+  // Header brand. The hero eyebrow started out sharing this field; it now
+  // has its own (`home_eyebrow`) and only falls back to the brand until
+  // Amber gives it its own text.
   brand: 'Amber Broihier',
   home_headline: 'Ideas worth speaking about.',
   home_lede:
@@ -20,7 +21,7 @@ export default function Home() {
     <div className="container home">
       <Adjustable id="home_eyebrow" content={content}>
         <p className="eyebrow">
-          <EditableText field="brand" value={content.brand} />
+          <EditableText field="home_eyebrow" value={content.home_eyebrow ?? content.brand} />
         </p>
       </Adjustable>
       <Adjustable id="home_headline" content={content}>

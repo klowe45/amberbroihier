@@ -58,3 +58,16 @@
   background: rgba(250, 247, 242, 0.15);
   color: var(--bg);
 }
+
+/* Undo / Redo: icon + word, slightly tighter than the text buttons. */
+.edit-bar-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding-left: 0.7rem;
+  padding-right: 0.8rem;
+}
+.edit-bar-btn-icon svg {
+  width: 1em;
+  height: 1em;
+}
