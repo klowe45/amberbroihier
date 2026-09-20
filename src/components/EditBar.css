@@ -71,3 +71,31 @@
   width: 1em;
   height: 1em;
 }
+
+.edit-bar-count {
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .edit-bar-inner {
+    padding: 0.5rem 1rem;
+    gap: 0.5rem;
+  }
+  .edit-bar-count {
+    font-size: 0.8rem;
+  }
+  .edit-bar-actions {
+    gap: 0.35rem;
+  }
+  .edit-bar-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  /* Undo / Redo collapse to icons. */
+  .edit-bar-btn-label {
+    display: none;
+  }
+  .edit-bar-btn-icon {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}

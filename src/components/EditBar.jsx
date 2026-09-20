@@ -33,7 +33,7 @@ export default function EditBar() {
               <path d="M9 14L4 9l5-5" />
               <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
             </svg>
-            Undo
+            <span className="edit-bar-btn-label">Undo</span>
           </button>
           <button
             type="button"
@@ -47,7 +47,7 @@ export default function EditBar() {
               <path d="M15 14l5-5-5-5" />
               <path d="M20 9H10a6 6 0 0 0 0 12h3" />
             </svg>
-            Redo
+            <span className="edit-bar-btn-label">Redo</span>
           </button>
           <button
             type="button"

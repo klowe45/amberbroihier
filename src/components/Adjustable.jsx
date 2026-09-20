@@ -65,9 +65,12 @@ export default function Adjustable({ id, content = {}, step = 8, grip = true, cl
     set(shiftKey, content[shiftKey] ? '0' : null)
   }
 
+  // Horizontal shift goes through a CSS variable so the stylesheet can
+  // ignore it on phones (offsets tuned on a desktop push text off a
+  // narrow screen).
   const style = {}
   if (gap) style.marginTop = gap
-  if (shift) style.transform = `translateX(${shift}px)`
+  if (shift) style['--shift'] = `${shift}px`
 
   return (
     <div className={`adjustable${live ? ' is-dragging' : ''} ${className}`.trim()} style={style}>

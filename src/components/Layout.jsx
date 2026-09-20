@@ -38,13 +38,26 @@ export default function Layout() {
   const { user, isAdmin, signOut } = useAuth()
   const { content } = useSiteContent(NAV_FALLBACK)
   const { pending, set, refresh } = useEdit()
-  const pageKey = pageKeyFor(useLocation().pathname)
   // Nav labels default to plain navigation. Amber opts in to editing
   // them by clicking the pencil toggle to the left of the nav — the
   // rest of the time clicking "Home" actually goes home.
   const [navEditMode, setNavEditMode] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
   const [addImageOpen, setAddImageOpen] = useState(false)
+  // Mobile: everything but Home lives behind a hamburger. Closes on
+  // navigation and on any click outside the header.
+  const [menuOpen, setMenuOpen] = useState(false)
+  const { pathname } = useLocation()
+  const pageKey = pageKeyFor(pathname)
+  useEffect(() => { setMenuOpen(false) }, [pathname])
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e) => {
+      if (!e.target.closest?.('.site-header')) setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [menuOpen])
 
   // Add a free-positioned image near the top-left of the content; Amber drags
   // it wherever she likes over the page. Rides the normal Publish flow.
@@ -84,9 +97,30 @@ export default function Layout() {
               Local · dev data
             </span>
           )}
-          <nav className="nav" aria-label="Main">
+          {/* Mobile-only: Home stays in the header bar, beside the hamburger
+              that opens the rest of the menu. Hidden on desktop by CSS. */}
+          <div className="header-mobile">
+            <NavLink to="/" end className="nav-home-mobile">
+              <EditableText
+                field="nav_home"
+                value={content.nav_home}
+                enabled={navEditMode}
+              />
+            </NavLink>
+            <button
+              type="button"
+              className={`nav-burger${menuOpen ? ' is-open' : ''}`}
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-controls="site-nav"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            >
+              <span /><span /><span />
+            </button>
+          </div>
+          <nav id="site-nav" className={`nav${menuOpen ? ' is-open' : ''}`} aria-label="Main">
             {NAV_PAGES.map((p) => (
-              <NavLink key={p.path} to={p.path} end={p.end}>
+              <NavLink key={p.path} to={p.path} end={p.end} className={p.end ? 'nav-home' : undefined}>
                 <EditableText
                   field={p.key}
                   value={content[p.key]}
@@ -169,7 +203,6 @@ export default function Layout() {
 
       <footer className="site-footer">
         <div className="container site-footer-inner">
-          <p>© {new Date().getFullYear()} Amber Broihier</p>
           {socials.length > 0 && (
             <ul className="footer-socials" aria-label="Social links">
               {socials.map((s) => (

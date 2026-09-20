@@ -40,6 +40,27 @@ body {
   min-height: 100svh;
 }
 
+/* No visible scrollbars anywhere — the page still scrolls (touch, wheel,
+   keys), the bar just isn't drawn. A visible bar steals width and
+   shifts the layout, which shows most on phones. Applies to the page
+   and to any scrollable panel (menus, tables, the editor). */
+html {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge */
+  /* A horizontal bar is always a layout bug, never wanted. */
+  overflow-x: hidden;
+}
+*,
+*::before,
+*::after {
+  scrollbar-width: none;
+}
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome, Safari, Edge */
+}
+
 h1,
 h2,
 h3,

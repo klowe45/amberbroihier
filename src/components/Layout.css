@@ -101,20 +101,26 @@
      the admin edit bar (z:20) so those keep priority visually. */
   z-index: 5;
   border-top: 1px solid var(--border);
-  padding: 0.6rem 0;
+  padding: 0.5rem 0;
   background: var(--bg-alt);
   color: var(--text-muted);
   font-size: 0.9rem;
 }
 
+/* One row: social icons on the left, Contact · Sign in on the right.
+   nowrap so it never grows into a second line. */
 .site-footer-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.75rem;
+  min-height: 1.8rem;
   /* Same override — footer spans full viewport too. */
   max-width: none;
+}
+.site-footer-inner > :only-child {
+  margin-left: auto;
 }
 
 .site-footer p {
@@ -175,19 +181,124 @@
   color: var(--accent);
 }
 
+/* Mobile header controls — hidden on desktop. */
+.header-mobile {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .site-header-inner {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
+  /* Brand wraps onto a second line if it must; Home + hamburger stay
+     on the right of the same row. */
+  .brand {
+    font-size: 1.05rem;
+    line-height: 1.25;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .env-badge {
+    display: none; /* no room; the dev server is obvious enough on a phone */
+  }
+
+  /* Home + hamburger on the right of the brand row. */
+  .header-mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-left: auto;
+  }
+  .header-mobile .nav-home-mobile {
+    color: var(--text);
+    font-size: 0.95rem;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+  }
+  .header-mobile .nav-home-mobile:hover,
+  .header-mobile .nav-home-mobile.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .nav-burger {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: inline-flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    outline: none;
   }
+  .nav-burger:focus-visible {
+    box-shadow: 0 0 0 2px var(--accent); /* keyboard users only */
+  }
+  .nav-burger span {
+    display: block;
+    width: 1.1rem;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform 160ms ease, opacity 160ms ease;
+  }
+  .nav-burger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-burger.is-open span:nth-child(2) { opacity: 0; }
+  .nav-burger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* The menu itself: a full-width column under the brand row, closed
+     unless the hamburger opened it. Home is already in the bar. */
   .nav {
-    gap: 1.1rem;
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: flex-end; /* links line up under the hamburger, on the right */
+    gap: 0;
+    padding: 0.35rem 0 0.5rem;
+    margin-top: 0.4rem;
   }
-  /* Footer content wraps to two rows on narrow screens, so give the
-     main area more bottom clearance to keep content from hiding. */
+  .nav.is-open {
+    display: flex;
+  }
+  .nav .nav-home {
+    display: none;
+  }
+  .nav > a {
+    padding: 0.6rem 0;
+    font-size: 1.05rem;
+    text-align: right;
+    border-bottom: none;
+  }
+  .nav > a.active {
+    color: var(--accent);
+  }
+  .nav > a,
+  .nav > a:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  /* Admin tools (add image, edit labels, colors) sit in a row at the end. */
+  .nav .theme-gear,
+  .nav .edit-mode-toggle {
+    margin-top: 0.6rem;
+    margin-left: 0.5rem;
+    align-self: flex-end;
+    display: inline-flex;
+  }
+  .nav .image-add-btn { margin-top: 0.6rem; }
   .site-main {
-    padding-bottom: 6.5rem;
+    padding-bottom: 4.5rem;
+  }
+  .footer-links {
+    white-space: nowrap;
   }
 }
 
