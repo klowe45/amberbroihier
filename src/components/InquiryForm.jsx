@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../lib/api.js'
+import { trackSubmit } from '../lib/analytics.js'
 import { useDraft } from '../lib/useDraft.js'
 import './BookingForm.css'
 
@@ -33,6 +34,7 @@ export default function InquiryForm() {
     setSubmitting(true)
     try {
       await api.post('/api/inquiries', values)
+      trackSubmit('inquiry')
       setStatus({
         kind: 'success',
         text: 'Thank you — your inquiry is on its way to Amber. Expect a reply within a few business days.',

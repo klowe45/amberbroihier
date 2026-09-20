@@ -10,6 +10,7 @@ import EditModeToggle from './EditModeToggle.jsx'
 import ThemeSettings from './ThemeSettings.jsx'
 import ImageAddModal from './ImageAddModal.jsx'
 import ImageLayer from './ImageLayer.jsx'
+import Analytics from './Analytics.jsx'
 import './Layout.css'
 
 const genImgId = () =>
@@ -68,6 +69,7 @@ export default function Layout() {
   return (
     <div className="site">
       <div className="site-frame" aria-hidden="true" />
+      <Analytics />
       <EditBar />
       <header className="site-header">
         <div className="container site-header-inner">

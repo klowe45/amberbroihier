@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../lib/api.js'
+import { trackSubmit } from '../lib/analytics.js'
 import { useDraft } from '../lib/useDraft.js'
 import './BookingForm.css'
 
@@ -32,6 +33,7 @@ export default function BookingForm() {
     setSubmitting(true)
     try {
       await api.post('/api/bookings', values)
+      trackSubmit('booking')
       setStatus({
         kind: 'success',
         text:
