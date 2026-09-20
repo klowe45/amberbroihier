@@ -84,6 +84,7 @@ export default function Speaking() {
       </div>
 
       {videos.length > 0 && (
+        <Adjustable id="speaking_videos" content={content}>
         <section className="speaking-videos">
           <h2>Recent talks</h2>
           <div className="video-grid">
@@ -98,6 +99,7 @@ export default function Speaking() {
             ))}
           </div>
         </section>
+        </Adjustable>
       )}
 
       <CustomBlocks page="speaking" content={content} />

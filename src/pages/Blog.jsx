@@ -40,6 +40,7 @@ export default function Blog() {
         </Adjustable>
       </div>
 
+      <Adjustable id="blog_posts" content={content}>
       {loading ? (
         <p className="blog-empty">Loading…</p>
       ) : posts.length === 0 ? (
@@ -67,6 +68,7 @@ export default function Blog() {
           ))}
         </ul>
       )}
+      </Adjustable>
       <CustomBlocks page="blog" content={content} />
     </div>
   )

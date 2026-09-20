@@ -2,6 +2,7 @@ import { useReducer, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
 import EditableText from './EditableText.jsx'
+import Adjustable from './Adjustable.jsx'
 import './CustomBlocks.css'
 
 // Per-page flow of Amber-added blocks — text OR image — in one ordered list so
@@ -123,8 +124,10 @@ export default function CustomBlocks({ page, content = {} }) {
   return (
     <div className={`custom-blocks${isAdmin ? ' is-admin' : ''}`}>
       {visible.map((b) => (
+        // Each block gets the ▲/▼ spacing arrows (no grip — the block's own
+        // ⠿ handle reorders it). Space is stored as space_blk_<id>.
+        <Adjustable key={b.id} id={b.id} content={content} grip={false} className="custom-block-adjust">
         <div
-          key={b.id}
           ref={(el) => { if (el) blockEls.current.set(b.id, el); else blockEls.current.delete(b.id) }}
           className={`custom-block${overId === b.id ? ' is-over' : ''}${dragId === b.id ? ' is-dragging' : ''}`}
         >
@@ -183,6 +186,7 @@ export default function CustomBlocks({ page, content = {} }) {
             </button>
           )}
         </div>
+        </Adjustable>
       ))}
 
       {isAdmin && (

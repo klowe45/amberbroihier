@@ -31,15 +31,21 @@ export default function About() {
           <EditableText field="about_headline" value={content.about_headline} />
         </h1>
         </Adjustable>
+        <Adjustable id="about_p1" content={content}>
         <p>
           <EditableText field="about_p1" value={content.about_p1} multiline />
         </p>
+        </Adjustable>
+        <Adjustable id="about_p2" content={content}>
         <p>
           <EditableText field="about_p2" value={content.about_p2} multiline />
         </p>
+        </Adjustable>
+        <Adjustable id="about_p3" content={content}>
         <p>
           <EditableText field="about_p3" value={content.about_p3} multiline />
         </p>
+        </Adjustable>
         <CustomBlocks page="about" content={content} />
       </div>
     </div>

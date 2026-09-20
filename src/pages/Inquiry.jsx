@@ -38,7 +38,9 @@ export default function Inquiry() {
         </p>
         </Adjustable>
       </div>
+      <Adjustable id="inquiry_form" content={content}>
       <InquiryForm />
+      </Adjustable>
       <CustomBlocks page="inquiry" content={content} />
     </div>
   )

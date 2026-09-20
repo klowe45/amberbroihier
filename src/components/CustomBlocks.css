@@ -160,3 +160,9 @@
 .custom-block.is-over {
   border-top-color: var(--accent);
 }
+
+/* Spacing arrows for a block sit under its reorder handle in the gutter. */
+.custom-block-adjust > .adjustable-controls {
+  top: 1.5rem;
+  left: -1.75rem;
+}

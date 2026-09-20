@@ -39,6 +39,7 @@ export default function Book() {
           />
         </p>
         </Adjustable>
+        <Adjustable id="book_email_line" content={content}>
         <p className="book-email-line">
           <EditableText
             field="book_email_line"
@@ -48,8 +49,11 @@ export default function Book() {
             <EditableText field="book_email" value={content.book_email} />
           </a>
         </p>
+        </Adjustable>
       </div>
+      <Adjustable id="book_form" content={content}>
       <BookingForm />
+      </Adjustable>
       <CustomBlocks page="book" content={content} />
     </div>
   )

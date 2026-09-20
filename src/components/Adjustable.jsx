@@ -17,7 +17,10 @@ const MAX_SPACE = 1200
 const MAX_SHIFT = 1200
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
-export default function Adjustable({ id, content = {}, step = 8, children }) {
+// `grip` can be turned off where the wrapped element already has a drag
+// handle of its own (custom text blocks reorder with theirs); the arrows
+// stay. `className` lets a host nudge where the controls sit.
+export default function Adjustable({ id, content = {}, step = 8, grip = true, className = '', children }) {
   const { isAdmin } = useAuth()
   const { pending, set } = useEdit()
   const [live, setLive] = useState(null)
@@ -67,10 +70,10 @@ export default function Adjustable({ id, content = {}, step = 8, children }) {
   if (shift) style.transform = `translateX(${shift}px)`
 
   return (
-    <div className={`adjustable${live ? ' is-dragging' : ''}`} style={style}>
+    <div className={`adjustable${live ? ' is-dragging' : ''} ${className}`.trim()} style={style}>
       {isAdmin && (
         <div className="adjustable-controls">
-          <span
+          {grip && <span
             className="adjustable-grip"
             onPointerDown={startDrag}
             onDoubleClick={reset}
@@ -80,7 +83,7 @@ export default function Adjustable({ id, content = {}, step = 8, children }) {
             title="Drag to move · double-click to reset"
           >
             ⠿
-          </span>
+          </span>}
           <button type="button" className="adjustable-btn" onClick={() => nudge(-step)} aria-label="Move up" title="Move up">▲</button>
           {(gap !== 0 || shift !== 0) && (
             <span className="adjustable-val">
