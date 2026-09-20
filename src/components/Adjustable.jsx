@@ -65,12 +65,14 @@ export default function Adjustable({ id, content = {}, step = 8, grip = true, cl
     set(shiftKey, content[shiftKey] ? '0' : null)
   }
 
-  // Horizontal shift goes through a CSS variable so the stylesheet can
-  // ignore it on phones (offsets tuned on a desktop push text off a
-  // narrow screen).
+  // Horizontal shift is a relative `left` offset, NOT a transform: a
+  // transform would turn this wrapper into the containing block for any
+  // position:fixed child (the "+" block menu), sending it off-screen.
+  // Phones ignore the offset (stylesheet !important) — desktop-tuned
+  // shifts push text off a narrow screen.
   const style = {}
   if (gap) style.marginTop = gap
-  if (shift) style['--shift'] = `${shift}px`
+  if (shift) style.left = shift
 
   return (
     <div className={`adjustable${live ? ' is-dragging' : ''} ${className}`.trim()} style={style}>

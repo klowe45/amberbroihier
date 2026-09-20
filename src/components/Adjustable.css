@@ -1,10 +1,9 @@
 .adjustable {
   position: relative;
-  transform: translateX(var(--shift, 0px));
 }
 @media (max-width: 640px) {
   .adjustable {
-    transform: none;
+    left: 0 !important;
   }
 }
 

@@ -317,12 +317,21 @@ export default function EditableText({
           e.stopPropagation()
           e.preventDefault()
           if (menuOpen) { setMenuOpen(false); return }
+          // Open downward from the + whenever there's reasonable room
+          // (the list scrolls if it doesn't all fit); only flip above the
+          // + when the bottom of the screen is right there. Never taller
+          // than the space it has, so it can't run off-screen.
           const r = e.currentTarget.getBoundingClientRect()
-          const MENU_H = 480
-          const below = r.bottom + 6 + MENU_H <= window.innerHeight
+          const GAP = 6
+          const MIN_H = 240
+          const spaceBelow = window.innerHeight - r.bottom - GAP - 8
+          const spaceAbove = r.top - GAP - 8
+          const below = spaceBelow >= MIN_H || spaceBelow >= spaceAbove
+          // Keep the left edge on-screen for narrow phones.
+          const left = Math.max(8, Math.min(r.left, window.innerWidth - 240))
           setMenuPos(below
-            ? { left: r.left, top: r.bottom + 6 }
-            : { left: r.left, bottom: window.innerHeight - r.top + 6 })
+            ? { left, top: r.bottom + GAP, maxHeight: Math.max(120, spaceBelow) }
+            : { left, bottom: window.innerHeight - r.top + GAP, maxHeight: Math.max(120, spaceAbove) })
           setMenuOpen(true)
         }}
         aria-label="Insert a block"
