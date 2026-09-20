@@ -80,9 +80,26 @@ export function preloadAllFonts() {
 
 // A horizontal rule. Stored as a bare <hr>.
 const BlockEmbed = Quill.import('blots/block/embed')
+// A horizontal rule. Full width by default; dragging it sideways makes it
+// a shorter rule sitting left / centre / right, and clicking it cycles the
+// length (full → ½ → ⅓). Stored as classes on the <hr>.
+const HR_ALIGNS = ['left', 'center', 'right']
+const HR_SIZES = ['full', 'half', 'third']
 class Divider extends BlockEmbed {
   static blotName = 'divider'
   static tagName = 'hr'
+  static create(value) {
+    const node = super.create()
+    const v = value && typeof value === 'object' ? value : {}
+    if (HR_ALIGNS.includes(v.align)) node.classList.add(`rt-hr-${v.align}`)
+    if (HR_SIZES.includes(v.size) && v.size !== 'full') node.classList.add(`rt-hr-${v.size}`)
+    return node
+  }
+  static value(node) {
+    const align = HR_ALIGNS.find((a) => node.classList.contains(`rt-hr-${a}`)) || null
+    const size = HR_SIZES.find((z) => node.classList.contains(`rt-hr-${z}`)) || 'full'
+    return { align, size }
+  }
 }
 Quill.register(Divider, true)
 
@@ -230,8 +247,9 @@ export function installButtonDrag(quill, onClickButton) {
   }
 
   const onPointerDown = (e) => {
-    const btn = e.target.closest?.('a.rt-button')
+    const btn = e.target.closest?.('a.rt-button, hr')
     if (!btn || e.button !== 0) return
+    const isRule = btn.tagName === 'HR'
     e.preventDefault()
     const startX = e.clientX
     const startY = e.clientY
@@ -260,7 +278,15 @@ export function installButtonDrag(quill, onClickButton) {
       if (!blot) return
       const fromIndex = quill.getIndex(blot)
       if (!dragging) {
-        onClickButton?.(fromIndex, SiteButton.value(btn))
+        if (isRule) {
+          // Click: cycle the rule's length, keeping where it sits.
+          const v = Divider.value(btn)
+          const size = HR_SIZES[(HR_SIZES.indexOf(v.size) + 1) % HR_SIZES.length]
+          const align = size === 'full' ? null : v.align || 'center'
+          replaceEmbed(quill, fromIndex, 'divider', { align, size })
+        } else {
+          onClickButton?.(fromIndex, SiteButton.value(btn))
+        }
         return
       }
       const t = dropTarget(ev.clientX, ev.clientY)
@@ -273,6 +299,19 @@ export function installButtonDrag(quill, onClickButton) {
       }
       const r = root.getBoundingClientRect()
       const rel = (ev.clientX - r.left) / r.width
+      if (isRule) {
+        // Sideways drop: left / centre / right thirds. A rule that's still
+        // full width becomes a half-width one so the position shows.
+        const v = Divider.value(btn)
+        const align = rel < 1 / 3 ? 'left' : rel < 2 / 3 ? 'center' : 'right'
+        const size = v.size === 'full' ? 'half' : v.size
+        let to = toIndex
+        quill.deleteText(fromIndex, 1, 'user')
+        if (to > fromIndex) to -= 1
+        quill.insertEmbed(to, 'divider', { align, size }, 'user')
+        quill.setSelection(to, 1, 'silent')
+        return
+      }
       const align = rel < 1 / 3 ? false : rel < 2 / 3 ? 'center' : 'right'
       moveBlockEmbed(quill, fromIndex, toIndex, align)
     }
@@ -282,6 +321,13 @@ export function installButtonDrag(quill, onClickButton) {
 
   root.addEventListener('pointerdown', onPointerDown)
   return () => root.removeEventListener('pointerdown', onPointerDown)
+}
+
+// Swap the embed at `index` for one with a new value (same spot).
+function replaceEmbed(quill, index, name, value) {
+  quill.deleteText(index, 1, 'user')
+  quill.insertEmbed(index, name, value, 'user')
+  quill.setSelection(index, 1, 'silent')
 }
 
 // Replace the button at `index` with new label/destination, or remove it.
@@ -317,6 +363,18 @@ export function installToolbarExtras(quill) {
     bar.addEventListener('mousedown', (e) => {
       if (e.target.closest('input, textarea')) return
       e.preventDefault()
+      // Opening one dropdown closes any other that's open.
+      const label = e.target.closest('.ql-picker-label')
+      if (label) {
+        const mine = label.closest('.ql-picker')
+        bar.querySelectorAll('.ql-picker.ql-expanded').forEach((p) => {
+          if (p !== mine) {
+            p.classList.remove('ql-expanded')
+            p.querySelector('.ql-picker-label')?.setAttribute('aria-expanded', 'false')
+            p.querySelector('.ql-picker-options')?.setAttribute('aria-hidden', 'true')
+          }
+        })
+      }
     })
   }
 
@@ -379,6 +437,32 @@ export function installToolbarExtras(quill) {
     input.value = typeof v === 'string' ? String(parseInt(v, 10) || '') : ''
   })
 }
+
+// Line spacing and paragraph gap, as block classes so they survive on the
+// public page: <p class="ql-lh-15 ql-gap-16">. Values are whitelisted;
+// the matching CSS lives in EditableText.css.
+const Parchment = Quill.import('parchment')
+export const LINE_HEIGHTS = [
+  { v: '08', label: '0.8' }, { v: '09', label: '0.9' }, { v: '10', label: '1.0' }, { v: '115', label: '1.15' }, { v: '13', label: '1.3' },
+  { v: '15', label: '1.5' }, { v: '18', label: '1.8' }, { v: '20', label: '2.0' }, { v: '25', label: '2.5' },
+]
+// Negative gaps pull the next line up (a title tight against its
+// paragraph, even overlapping); 'n' prefix because a class can't hold '-'.
+export const PARA_GAPS = [
+  { v: 'n24', label: '-24px' }, { v: 'n16', label: '-16px' }, { v: 'n12', label: '-12px' },
+  { v: 'n8', label: '-8px' }, { v: 'n4', label: '-4px' },
+  { v: '0', label: 'None' }, { v: '2', label: '2px' }, { v: '4', label: '4px' }, { v: '8', label: '8px' }, { v: '16', label: '16px' },
+  { v: '24', label: '24px' }, { v: '32', label: '32px' }, { v: '48', label: '48px' },
+]
+const LineHeight = new Parchment.ClassAttributor('lineheight', 'ql-lh', {
+  scope: Parchment.Scope.BLOCK,
+  whitelist: LINE_HEIGHTS.map((o) => o.v),
+})
+const ParaGap = new Parchment.ClassAttributor('paragap', 'ql-gap', {
+  scope: Parchment.Scope.BLOCK,
+  whitelist: PARA_GAPS.map((o) => o.v),
+})
+Quill.register({ 'formats/lineheight': LineHeight, 'formats/paragap': ParaGap }, true)
 
 // Quill's snow theme looks up toolbar button SVGs by name; undo/redo
 // aren't built in, so register icons or the buttons render empty.
@@ -446,12 +530,16 @@ export const singleLineModules = {
 export const multilineModules = {
   toolbar: {
     container: [
+      // Two tidy rows at the toolbar's max width:
+      //   undo/redo · style · font · size
+      //   B I U · align · line/gap · lists · link/clear
       ['undo', 'redo'],
       [{ header: [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline'],
       [{ font: [false, ...Font.whitelist] }],
       [{ size: [false, ...SIZE_PRESETS] }],
+      ['bold', 'italic', 'underline'],
       [{ align: [] }],
+      [{ lineheight: [false, ...LINE_HEIGHTS.map((o) => o.v)] }, { paragap: [false, ...PARA_GAPS.map((o) => o.v)] }],
       [{ list: 'ordered' }, { list: 'bullet' }],
       ['link', 'clean'],
     ],
@@ -463,7 +551,7 @@ export const multilineModules = {
 
 export const richFormats = [
   'header', 'bold', 'italic', 'underline', 'font', 'size', 'align', 'list', 'link',
-  'blockquote', 'table', 'divider', 'site-button',
+  'blockquote', 'table', 'divider', 'site-button', 'lineheight', 'paragap',
 ]
 
 const ALLOWED_TAGS = [

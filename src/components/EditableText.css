@@ -106,8 +106,12 @@
 
 /* Editor surface matches the surrounding typography so the swap
    doesn't jump. Snow's own font/size/padding are overridden here. */
+/* The editor occupies exactly the box the text occupied (same 2px/4px
+   inset the display element uses, border drawn inside as a shadow), so
+   nothing shifts or rewraps when it opens. */
 .editable-editor .ql-container.ql-snow {
-  border: 1px solid var(--accent);
+  border: none;
+  box-shadow: inset 0 0 0 1px var(--accent);
   border-radius: 2px;
   background: var(--bg);
   font-family: inherit;
@@ -116,17 +120,23 @@
   color: inherit;
 }
 .editable-editor .ql-editor {
-  padding: 0.35em 0.5em;
+  padding: 2px 4px;
   min-height: 1.5em;
+  font: inherit;
   line-height: inherit;
+  color: inherit;
   white-space: pre-wrap;
   overflow: visible;
+}
+.editable-editor-multi {
+  margin: -2px -4px;
+  width: calc(100% + 8px);
 }
 .editable-editor-multi .ql-editor {
   min-height: var(--editable-h, 4em);
 }
 .editable-editor .ql-container.ql-snow:focus-within {
-  box-shadow: 0 0 0 3px rgba(40, 53, 31, 0.15);
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px rgba(40, 53, 31, 0.15);
 }
 .editable-editor .ql-editor.ql-blank::before {
   left: 0.5em;
@@ -134,12 +144,6 @@
   color: var(--text-muted);
   font-style: italic;
   font-weight: normal;
-}
-.editable-editor .ql-editor p {
-  margin: 0;
-}
-.editable-editor-multi .ql-editor p + p {
-  margin-top: 0.75em;
 }
 
 /* Toolbar floats just above the field, out of the document flow, so
@@ -150,8 +154,12 @@
   left: 0;
   z-index: 60;
   width: max-content;
-  max-width: min(780px, calc(100vw - 2rem));
-  padding: 4px 6px;
+  max-width: min(500px, calc(100vw - 2rem));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 10px;
+  padding: 5px 8px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -163,6 +171,41 @@
   text-transform: none;
   letter-spacing: 0;
 }
+/* Groups: even spacing, no Snow trailing margins, so a wrapped toolbar
+   still reads as tidy rows. */
+.editable-editor .ql-toolbar.ql-snow .ql-formats {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+}
+.editable-editor .ql-toolbar.ql-snow .ql-formats + .ql-formats::before {
+  content: '';
+  width: 1px;
+  height: 18px;
+  margin-right: 6px;
+  background: var(--border);
+}
+.editable-editor .ql-toolbar.ql-snow button {
+  width: 26px;
+  height: 24px;
+  padding: 3px;
+}
+.editable-editor .ql-toolbar.ql-snow .ql-picker {
+  height: 24px;
+}
+.editable-editor .ql-toolbar.ql-snow .ql-picker-label {
+  padding-left: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.editable-editor .ql-toolbar.ql-snow .ql-picker-options {
+  padding: 4px 6px;
+}
+.editable-editor .ql-toolbar.ql-snow .ql-picker-item {
+  padding: 4px 6px;
+  white-space: nowrap;
+}
 .editable-editor .ql-toolbar.ql-snow.is-right-anchored {
   left: auto;
   right: 0;
@@ -170,12 +213,6 @@
 .editable-editor .ql-toolbar.ql-snow.is-below {
   bottom: auto;
   top: calc(100% + 6px);
-}
-.editable-editor .ql-toolbar.ql-snow .ql-formats {
-  margin-right: 8px;
-}
-.editable-editor .ql-toolbar.ql-snow .ql-formats:last-child {
-  margin-right: 0;
 }
 .editable-editor .ql-toolbar .ql-stroke {
   stroke: var(--text);
@@ -188,6 +225,8 @@
 }
 .editable-editor .ql-toolbar button:hover .ql-stroke,
 .editable-editor .ql-toolbar button.ql-active .ql-stroke,
+.editable-editor .ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+.editable-editor .ql-toolbar .ql-picker-label.ql-active .ql-fill,
 .editable-editor .ql-toolbar .ql-picker-label:hover .ql-stroke,
 .editable-editor .ql-toolbar .ql-picker-item:hover .ql-stroke,
 .editable-editor .ql-toolbar .ql-picker-item.ql-selected .ql-stroke {
@@ -223,7 +262,13 @@
 }
 /* Font picker: "Font" when nothing is set; wide enough for the names. */
 .editable-editor .ql-picker.ql-font {
-  width: 150px;
+  width: 128px;
+}
+.editable-editor .ql-picker.ql-header {
+  width: 92px;
+}
+.editable-editor .ql-picker.ql-size {
+  width: 78px;
 }
 .editable-editor .ql-picker.ql-font .ql-picker-options {
   width: max-content;
@@ -290,31 +335,45 @@
 span.rich-text {
   display: contents;
 }
-.rich-text p {
+:is(.rich-text, .ql-editor.rich-text) p {
   margin: 0;
 }
-.rich-text p + p,
-.rich-text p + h1, .rich-text p + h2, .rich-text p + h3,
-.rich-text h1 + p, .rich-text h2 + p, .rich-text h3 + p,
-.rich-text p + ol, .rich-text ol + p {
+/* Blank lines Amber types as spacing survive on the page: the editor
+   keeps a <br> in an empty paragraph, the saved HTML doesn't, so give an
+   empty block a line box (zero-width space) rather than collapsing it. */
+.rich-text :is(p, h1, h2, h3, li):empty::before {
+  content: '\200b';
+}
+:is(.rich-text, .ql-editor.rich-text) p + p,
+:is(.rich-text, .ql-editor.rich-text) p + h1, :is(.rich-text, .ql-editor.rich-text) p + h2, :is(.rich-text, .ql-editor.rich-text) p + h3,
+:is(.rich-text, .ql-editor.rich-text) h1 + p, :is(.rich-text, .ql-editor.rich-text) h2 + p, :is(.rich-text, .ql-editor.rich-text) h3 + p,
+:is(.rich-text, .ql-editor.rich-text) p + ol, :is(.rich-text, .ql-editor.rich-text) ol + p {
   margin-top: 0.75em;
 }
-.rich-text h1, .rich-text h2, .rich-text h3 {
+:is(.rich-text, .ql-editor.rich-text) h1, :is(.rich-text, .ql-editor.rich-text) h2, :is(.rich-text, .ql-editor.rich-text) h3 {
   margin: 0;
   line-height: 1.2;
+  font-family: var(--serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
-.rich-text ol {
+/* Same heading sizes as the rest of the site (Quill's editor would
+   otherwise use its own 2em / 1.5em / 1.17em). */
+:is(.rich-text, .ql-editor.rich-text) h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); }
+:is(.rich-text, .ql-editor.rich-text) h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
+:is(.rich-text, .ql-editor.rich-text) h3 { font-size: 1.3rem; }
+:is(.rich-text, .ql-editor.rich-text) ol {
   margin: 0;
   padding-left: 1.5em;
 }
 /* Quill 2 emits <ol> for both list kinds and marks bullets on the <li>. */
-.rich-text li[data-list='bullet'] {
+:is(.rich-text, .ql-editor.rich-text) li[data-list='bullet'] {
   list-style-type: disc;
 }
-.rich-text .ql-align-center { text-align: center; }
-.rich-text .ql-align-right { text-align: right; }
-.rich-text .ql-align-justify { text-align: justify; }
-.rich-text a {
+:is(.rich-text, .ql-editor.rich-text) .ql-align-center { text-align: center; }
+:is(.rich-text, .ql-editor.rich-text) .ql-align-right { text-align: right; }
+:is(.rich-text, .ql-editor.rich-text) .ql-align-justify { text-align: justify; }
+:is(.rich-text, .ql-editor.rich-text) a {
   color: var(--accent);
   text-decoration: underline;
 }
@@ -490,7 +549,7 @@ span.rich-text {
 /* ---------- Inserted blocks: how they look on the page and in the editor ---------- */
 
 /* Call-to-action button (matches the site's .btn). */
-.rich-text a.rt-button,
+:is(.rich-text, .ql-editor.rich-text) a.rt-button,
 .editable-editor .ql-editor a.rt-button {
   display: inline-block;
   margin: 0.5em 0;
@@ -510,7 +569,7 @@ span.rich-text {
   cursor: pointer;
   transition: background 120ms ease;
 }
-.rich-text a.rt-button:hover {
+:is(.rich-text, .ql-editor.rich-text) a.rt-button:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
   color: var(--bg);
@@ -526,13 +585,13 @@ span.rich-text {
 
 /* Alignment on a button: it's a block embed, so Quill's align class lands
    on the <a> itself; make it a shrink-wrapped block and push it around. */
-.rich-text a.rt-button.ql-align-center,
+:is(.rich-text, .ql-editor.rich-text) a.rt-button.ql-align-center,
 .editable-editor .ql-editor a.rt-button.ql-align-center {
   display: table;
   margin-left: auto;
   margin-right: auto;
 }
-.rich-text a.rt-button.ql-align-right,
+:is(.rich-text, .ql-editor.rich-text) a.rt-button.ql-align-right,
 .editable-editor .ql-editor a.rt-button.ql-align-right {
   display: table;
   margin-left: auto;
@@ -556,24 +615,44 @@ span.rich-text {
   box-shadow: 0 2px 0 0 var(--accent);
 }
 
-/* Divider. */
-.rich-text hr,
+/* Divider. Full width by default; shorter rules sit left / centre / right. */
+:is(.rich-text, .ql-editor.rich-text) hr,
 .editable-editor .ql-editor hr {
   border: 0;
   border-top: 1px solid var(--border);
   margin: 1.25em 0;
+  width: 100%;
 }
+:is(.rich-text, .ql-editor.rich-text) hr.rt-hr-half { width: 50%; }
+:is(.rich-text, .ql-editor.rich-text) hr.rt-hr-third { width: 33.333%; }
+:is(.rich-text, .ql-editor.rich-text) hr.rt-hr-left { margin-left: 0; margin-right: auto; }
+:is(.rich-text, .ql-editor.rich-text) hr.rt-hr-center { margin-left: auto; margin-right: auto; }
+:is(.rich-text, .ql-editor.rich-text) hr.rt-hr-right { margin-left: auto; margin-right: 0; }
+/* In the editor a rule is grab-to-move / click-to-resize; give it a
+   fatter hit area than a 1px line. */
+.editable-editor .ql-editor hr {
+  cursor: grab;
+  touch-action: none;
+  padding: 6px 0;
+  background-clip: content-box;
+  border-top: 0;
+  background: linear-gradient(var(--border), var(--border)) center / 100% 1px no-repeat;
+  height: 13px;
+  box-sizing: border-box;
+}
+.editable-editor .ql-editor hr.rt-dragging { opacity: 0.45; cursor: grabbing; }
+.editable-editor .ql-editor hr.ql-embed-selected { outline: 1px dashed var(--accent); outline-offset: 2px; }
 
 /* To-do list: a drawn box, ticked when checked. Quill 2 emits
    <li data-list="checked|unchecked"> and, in the editor, a .ql-ui span. */
-.rich-text li[data-list='checked'],
-.rich-text li[data-list='unchecked'] {
+:is(.rich-text, .ql-editor.rich-text) li[data-list='checked'],
+:is(.rich-text, .ql-editor.rich-text) li[data-list='unchecked'] {
   list-style: none;
   position: relative;
   padding-left: 1.5em;
 }
-.rich-text li[data-list='checked']::before,
-.rich-text li[data-list='unchecked']::before {
+:is(.rich-text, .ql-editor.rich-text) li[data-list='checked']::before,
+:is(.rich-text, .ql-editor.rich-text) li[data-list='unchecked']::before {
   content: '';
   position: absolute;
   left: 0;
@@ -584,11 +663,11 @@ span.rich-text {
   border-radius: 3px;
   background: var(--bg);
 }
-.rich-text li[data-list='checked']::before {
+:is(.rich-text, .ql-editor.rich-text) li[data-list='checked']::before {
   background: var(--accent);
   border-color: var(--accent);
 }
-.rich-text li[data-list='checked']::after {
+:is(.rich-text, .ql-editor.rich-text) li[data-list='checked']::after {
   content: '';
   position: absolute;
   left: 0.3em;
@@ -599,20 +678,20 @@ span.rich-text {
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
-.rich-text li[data-list='checked'] {
+:is(.rich-text, .ql-editor.rich-text) li[data-list='checked'] {
   color: var(--text-muted);
 }
-.rich-text ul {
+:is(.rich-text, .ql-editor.rich-text) ul {
   margin: 0;
   padding-left: 1.5em;
 }
-.rich-text ul:has(> li[data-list='checked']),
-.rich-text ul:has(> li[data-list='unchecked']) {
+:is(.rich-text, .ql-editor.rich-text) ul:has(> li[data-list='checked']),
+:is(.rich-text, .ql-editor.rich-text) ul:has(> li[data-list='unchecked']) {
   padding-left: 0;
 }
 
 /* Table. Quill writes an inline black border on <table>; ours wins. */
-.rich-text table,
+:is(.rich-text, .ql-editor.rich-text) table,
 .editable-editor .ql-editor table {
   width: 100%;
   table-layout: fixed; /* equal columns, even when most cells are empty */
@@ -622,24 +701,24 @@ span.rich-text {
   font-family: var(--sans);
   font-size: 0.95rem;
 }
-.rich-text td, .rich-text th,
+:is(.rich-text, .ql-editor.rich-text) td, :is(.rich-text, .ql-editor.rich-text) th,
 .editable-editor .ql-editor td, .editable-editor .ql-editor th {
   border: 1px solid var(--border);
   padding: 0.5em 0.7em;
   vertical-align: top;
   text-align: left;
 }
-.rich-text th,
+:is(.rich-text, .ql-editor.rich-text) th,
 .editable-editor .ql-editor th {
   background: var(--bg-alt);
   font-weight: 600;
 }
-.rich-text td p { margin: 0; }
+:is(.rich-text, .ql-editor.rich-text) td p { margin: 0; }
 /* Empty cells keep a line's height on the public page. */
-.rich-text td:empty::after { content: '\00a0'; }
+:is(.rich-text, .ql-editor.rich-text) td:empty::after { content: '\00a0'; }
 
 /* Quote. */
-.rich-text blockquote,
+:is(.rich-text, .ql-editor.rich-text) blockquote,
 .editable-editor .ql-editor blockquote {
   margin: 0.75em 0;
   padding: 0.2em 0 0.2em 1em;
@@ -647,3 +726,84 @@ span.rich-text {
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* ---------- Line spacing & paragraph gap (block classes) ---------- */
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-08, .editable-editor .ql-editor .ql-lh-08 { line-height: 0.8 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-09, .editable-editor .ql-editor .ql-lh-09 { line-height: 0.9 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-10, .editable-editor .ql-editor .ql-lh-10 { line-height: 1 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-115, .editable-editor .ql-editor .ql-lh-115 { line-height: 1.15 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-13, .editable-editor .ql-editor .ql-lh-13 { line-height: 1.3 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-15, .editable-editor .ql-editor .ql-lh-15 { line-height: 1.5 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-18, .editable-editor .ql-editor .ql-lh-18 { line-height: 1.8 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-20, .editable-editor .ql-editor .ql-lh-20 { line-height: 2 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-lh-25, .editable-editor .ql-editor .ql-lh-25 { line-height: 2.5 !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n24, .editable-editor .ql-editor .ql-gap-n24 { margin-bottom: -24px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n16, .editable-editor .ql-editor .ql-gap-n16 { margin-bottom: -16px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n12, .editable-editor .ql-editor .ql-gap-n12 { margin-bottom: -12px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n8, .editable-editor .ql-editor .ql-gap-n8 { margin-bottom: -8px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n4, .editable-editor .ql-editor .ql-gap-n4 { margin-bottom: -4px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-0, .editable-editor .ql-editor .ql-gap-0 { margin-bottom: 0px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-2, .editable-editor .ql-editor .ql-gap-2 { margin-bottom: 2px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-4, .editable-editor .ql-editor .ql-gap-4 { margin-bottom: 4px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-8, .editable-editor .ql-editor .ql-gap-8 { margin-bottom: 8px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-16, .editable-editor .ql-editor .ql-gap-16 { margin-bottom: 16px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-24, .editable-editor .ql-editor .ql-gap-24 { margin-bottom: 24px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-32, .editable-editor .ql-editor .ql-gap-32 { margin-bottom: 32px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-48, .editable-editor .ql-editor .ql-gap-48 { margin-bottom: 48px !important; }
+/* A gap class on a paragraph beats the default p + p spacing rule. */
+:is(.rich-text, .ql-editor.rich-text) [class*='ql-gap-'] + p,
+:is(.rich-text, .ql-editor.rich-text) [class*='ql-gap-'] + h1, :is(.rich-text, .ql-editor.rich-text) [class*='ql-gap-'] + h2, :is(.rich-text, .ql-editor.rich-text) [class*='ql-gap-'] + h3 {
+  margin-top: 0;
+}
+
+/* Line-spacing and gap pickers: compact "↕ 1.5" / "↧ 8px" labels. */
+.editable-editor .ql-picker.ql-lineheight,
+.editable-editor .ql-picker.ql-paragap { width: 74px; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label:not([data-value])::before { content: '↕ Line'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label:not([data-value])::before { content: '↧ Gap'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item:not([data-value])::before,
+.editable-editor .ql-picker.ql-paragap .ql-picker-item:not([data-value])::before { content: 'Default'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='08']::before { content: '↕ 0.8'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='08']::before { content: '0.8'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='09']::before { content: '↕ 0.9'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='09']::before { content: '0.9'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='10']::before { content: '↕ 1.0'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='10']::before { content: '1.0'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='115']::before { content: '↕ 1.15'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='115']::before { content: '1.15'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='13']::before { content: '↕ 1.3'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='13']::before { content: '1.3'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='15']::before { content: '↕ 1.5'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='15']::before { content: '1.5'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='18']::before { content: '↕ 1.8'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='18']::before { content: '1.8'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='20']::before { content: '↕ 2.0'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='20']::before { content: '2.0'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-label[data-value='25']::before { content: '↕ 2.5'; }
+.editable-editor .ql-picker.ql-lineheight .ql-picker-item[data-value='25']::before { content: '2.5'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='n24']::before { content: '↧ -24'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='n24']::before { content: '-24px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='n16']::before { content: '↧ -16'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='n16']::before { content: '-16px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='n12']::before { content: '↧ -12'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='n12']::before { content: '-12px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='n8']::before { content: '↧ -8'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='n8']::before { content: '-8px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='n4']::before { content: '↧ -4'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='n4']::before { content: '-4px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='0']::before { content: '↧ 0'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='0']::before { content: '0'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='2']::before { content: '↧ 2px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='2']::before { content: '2px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='4']::before { content: '↧ 4px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='4']::before { content: '4px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='8']::before { content: '↧ 8px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='8']::before { content: '8px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='16']::before { content: '↧ 16px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='16']::before { content: '16px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='24']::before { content: '↧ 24px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='24']::before { content: '24px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='32']::before { content: '↧ 32px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='32']::before { content: '32px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='48']::before { content: '↧ 48px'; }
+.editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='48']::before { content: '48px'; }

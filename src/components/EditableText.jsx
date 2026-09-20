@@ -111,7 +111,7 @@ export default function EditableText({
   // variable) rather than the wrapper so the typing area itself grows.
   const editorStyle = sizeStyle
     ? {
-        ...(size.w ? { width: size.w, maxWidth: '100%' } : {}),
+        ...(size.w ? { width: size.w + 8, maxWidth: 'calc(100% + 8px)' } : {}),
         ...(size.h ? { '--editable-h': `${size.h}px` } : {}),
       }
     : undefined
@@ -165,6 +165,9 @@ export default function EditableText({
       const quill = quillRef.current?.getEditor?.()
       if (!quill) return
       installToolbarExtras(quill)
+      // Same stylesheet rules as the published text, so what she sees
+      // while typing is what visitors see (spacing, headings, lists…).
+      quill.root.classList.add('rich-text')
       // Click a button in the editor to edit it; drag to move it.
       cleanupDrag = installButtonDrag(quill, (index, initial) =>
         setButtonDialog({ index, initial })
@@ -397,7 +400,7 @@ export default function EditableText({
     return (
       <div
         ref={wrapRef}
-        className={`editable-editor ${multiline ? 'editable-editor-multi' : 'editable-editor-single'}`}
+        className={`editable-editor ${multiline ? 'editable-editor-multi' : 'editable-editor-single'} ${className}`.trim()}
         style={editorStyle}
         // Wrapping <Link>/<NavLink>/<a> ancestors must not navigate
         // while Amber is clicking around in the toolbar.

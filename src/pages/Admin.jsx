@@ -7,6 +7,7 @@ import VideoManager from './admin/VideoManager.jsx'
 import BookingInbox from './admin/BookingInbox.jsx'
 import AnalyticsPanel from './admin/AnalyticsPanel.jsx'
 import SocialsManager from './admin/SocialsManager.jsx'
+import WaiverInbox from './admin/WaiverInbox.jsx'
 import './Admin.css'
 import { stripHtml } from '../lib/richText.js'
 
@@ -16,6 +17,7 @@ const TABS = [
   // Amber renamed that nav item to (nav_writing) instead of a hardcoded string.
   { id: 'blog', label: 'Writing', labelField: 'nav_writing' },
   { id: 'videos', label: 'Videos' },
+  { id: 'waivers', label: 'Waivers' },
   { id: 'socials', label: 'Socials' },
   { id: 'analytics', label: 'Analytics' },
 ]
@@ -66,6 +68,7 @@ export default function Admin() {
         {tab === 'bookings' && <BookingInbox />}
         {tab === 'blog' && <BlogManager />}
         {tab === 'videos' && <VideoManager initialEditId={editVideoId} />}
+        {tab === 'waivers' && <WaiverInbox />}
         {tab === 'socials' && <SocialsManager />}
         {tab === 'analytics' && <AnalyticsPanel />}
       </section>

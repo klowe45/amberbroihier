@@ -74,15 +74,29 @@ export default function CustomBlocks({ page, content = {}, slot }) {
     set(`block_${id}`, '')
   }
 
-  // Pointer-based reorder: track which block the pointer is over, then splice
-  // the dragged block into that slot on release.
+  // Pointer-based drag on the ⠿ handle. Up/down reorders (the block is
+  // spliced into the slot under the pointer on release); sideways shifts
+  // the block left/right, stored as shift_<id> — the same key the block's
+  // Adjustable wrapper reads — so one handle does both.
   const beginDrag = (e, id) => {
     if (!isAdmin) return
     e.preventDefault()
     setDragId(id)
     overRef.current = null
     setOverId(null)
+    const startX = e.clientX
+    const shiftKey = `shift_${id}`
+    const savedShift = Number(pending[shiftKey] ?? content[shiftKey] ?? 0) || 0
+    const wrapper = blockEls.current.get(id)?.closest('.adjustable')
+    let dx = 0
+    const SNAP = 6
     const move = (ev) => {
+      dx = Math.round(ev.clientX - startX)
+      // Live sideways preview straight on the wrapper (committed on release).
+      if (wrapper) {
+        const next = Math.abs(savedShift + dx) < SNAP ? 0 : savedShift + dx
+        wrapper.style.left = next ? `${next}px` : ''
+      }
       let target = null
       for (const [bid, el] of blockEls.current) {
         if (!el || bid === id) continue
@@ -95,6 +109,8 @@ export default function CustomBlocks({ page, content = {}, slot }) {
     const end = () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', end)
+      if (wrapper) wrapper.style.left = ''
       const targetId = overRef.current
       const from = blocks.findIndex((b) => b.id === id)
       const to = targetId != null ? blocks.findIndex((b) => b.id === targetId) : -1
@@ -104,10 +120,13 @@ export default function CustomBlocks({ page, content = {}, slot }) {
         next.splice(to, 0, moved)
         writeList(next)
       }
+      const nextShift = Math.abs(savedShift + dx) < SNAP ? 0 : savedShift + dx
+      if (nextShift !== savedShift) set(shiftKey, String(nextShift))
       overRef.current = null
       setDragId(null)
       setOverId(null)
     }
+    window.addEventListener('pointercancel', end)
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', end)
   }
@@ -159,8 +178,8 @@ export default function CustomBlocks({ page, content = {}, slot }) {
             <span
               className="custom-block-handle"
               onPointerDown={(e) => beginDrag(e, b.id)}
-              aria-label="Drag to reorder"
-              title="Drag to reorder"
+              aria-label="Drag to move: up/down reorders, left/right shifts"
+              title="Drag to move · up/down reorders, left/right shifts"
             >
               ⠿
             </span>

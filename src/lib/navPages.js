@@ -14,6 +14,7 @@ export const NAV_PAGES = [
   { path: '/retreats', key: 'nav_retreats', fallback: 'Retreats' },
   { path: '/blog', key: 'nav_writing', fallback: 'Writing' },
   { path: '/inquiry', key: 'nav_inquiry', fallback: 'Inquiry' },
+  { path: '/waivers', key: 'nav_waivers', fallback: 'Waivers' },
 ]
 
 // [{ path, label }] with live labels, for the button dialog. A label is
