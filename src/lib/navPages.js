@@ -6,16 +6,38 @@ import { stripHtml } from './richText.js'
 // header nav and the "Goes to" choices when Amber adds a button, so the
 // button dialog always shows exactly what the tabs say — including any
 // label she has renamed (the nav_* keys in site_content).
+//
+// Pages with a `group` are collected under one dropdown tab in the header
+// (see NAV_GROUPS); the dropdown sits where the group's first page falls
+// in this order. The button dialog still lists them flat.
 export const NAV_PAGES = [
   { path: '/', key: 'nav_home', fallback: 'Home', end: true },
-  { path: '/about', key: 'nav_about', fallback: 'About' },
-  { path: '/speaking', key: 'nav_speaking', fallback: 'Speaking' },
+  // /about is Amber's Workshops page — she relabeled the tab in place.
+  { path: '/about', key: 'nav_about', fallback: 'About', group: 'experiences' },
+  { path: '/speaking', key: 'nav_speaking', fallback: 'Speaking', group: 'experiences' },
+  { path: '/retreats', key: 'nav_retreats', fallback: 'Retreats', group: 'experiences' },
   { path: '/prices', key: 'nav_prices', fallback: 'Prices' },
-  { path: '/retreats', key: 'nav_retreats', fallback: 'Retreats' },
   { path: '/blog', key: 'nav_writing', fallback: 'Writing' },
   { path: '/inquiry', key: 'nav_inquiry', fallback: 'Inquiry' },
   { path: '/waivers', key: 'nav_waivers', fallback: 'Waivers' },
 ]
+
+// Header dropdowns. A group is a label only — it has no page of its own.
+export const NAV_GROUPS = {
+  experiences: { key: 'nav_experiences', fallback: 'Experiences' },
+}
+
+// Header order: ungrouped pages as-is, each group folded into a single
+// { group, key, fallback, pages } entry at its first page's position.
+export const NAV_ITEMS = NAV_PAGES.reduce((items, p) => {
+  if (!p.group) return [...items, p]
+  const existing = items.find((i) => i.group === p.group)
+  if (existing) {
+    existing.pages.push(p)
+    return items
+  }
+  return [...items, { group: p.group, ...NAV_GROUPS[p.group], pages: [p] }]
+}, [])
 
 // [{ path, label }] with live labels, for the button dialog. A label is
 // the unsaved edit if there is one, else the saved copy, else the

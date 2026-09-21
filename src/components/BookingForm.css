@@ -1,6 +1,5 @@
 .booking-form {
   max-width: 720px;
-  margin-top: 1.5rem;
 }
 
 .booking-row {
@@ -12,6 +11,32 @@
   .booking-row {
     grid-template-columns: 1fr;
   }
+}
+
+.radio-group {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1.25rem;
+}
+.radio-group legend {
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+  padding: 0;
+}
+.radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-right: 1.5rem;
+  cursor: pointer;
+}
+.radio input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
 }
 
 .booking-status {

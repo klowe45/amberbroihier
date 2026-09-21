@@ -70,6 +70,66 @@
 }
 
 
+/* Dropdown tab (e.g. Experiences): a label that opens a small menu of
+   pages beneath it. Desktop opens on hover or click (handled in
+   Layout.jsx); mobile (below) expands inline inside the hamburger menu. */
+.nav-group {
+  position: relative;
+}
+.nav-group-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0 0 2px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+}
+.nav-group-btn:hover,
+.nav-group-btn.active,
+.nav-group.is-open .nav-group-btn {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.nav-group-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  left: -0.9rem;
+  min-width: 10rem;
+  flex-direction: column;
+  padding: 0.5rem 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+}
+/* Bridge the gap so the hover doesn't drop while moving to the menu. */
+.nav-group::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 0.7rem;
+}
+.nav-group.is-open .nav-group-menu {
+  display: flex;
+}
+.nav .nav-group-menu a {
+  padding: 0.45rem 0.9rem;
+  border-bottom: none;
+  white-space: nowrap;
+}
+.nav .nav-group-menu a:hover,
+.nav .nav-group-menu a.active {
+  color: var(--accent);
+  background: var(--bg-alt);
+}
+
 .link-btn {
   background: none;
   border: none;
@@ -284,6 +344,38 @@
   .nav > a:focus {
     outline: none;
     box-shadow: none;
+  }
+  /* Dropdown tab expands inline, indented under its label. */
+  .nav-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .nav-group::after {
+    display: none;
+  }
+  .nav-group-btn {
+    padding: 0.6rem 0;
+    font-size: 1.05rem;
+    border-bottom: none;
+  }
+  .nav-group-menu {
+    position: static;
+    min-width: 0;
+    padding: 0 0 0.3rem;
+    border: none;
+    box-shadow: none;
+    background: none;
+    align-items: flex-end;
+  }
+  .nav .nav-group-menu a {
+    padding: 0.45rem 0;
+    font-size: 1rem;
+    text-align: right;
+  }
+  .nav .nav-group-menu a:hover,
+  .nav .nav-group-menu a.active {
+    background: none;
   }
   /* Admin tools (add image, edit labels, colors) sit in a row at the end. */
   .nav .theme-gear,

@@ -4,7 +4,7 @@ import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
 import { useSiteContent } from '../lib/useSiteContent.js'
 import { applyTheme } from '../lib/theme.js'
-import { NAV_PAGES } from '../lib/navPages.js'
+import { NAV_PAGES, NAV_GROUPS, NAV_ITEMS } from '../lib/navPages.js'
 import EditableText from './EditableText.jsx'
 import EditBar from './EditBar.jsx'
 import EditModeToggle from './EditModeToggle.jsx'
@@ -30,6 +30,7 @@ function pageKeyFor(pathname) {
 const NAV_FALLBACK = {
   brand: 'Amber Broihier',
   ...Object.fromEntries(NAV_PAGES.map((p) => [p.key, p.fallback])),
+  ...Object.fromEntries(Object.values(NAV_GROUPS).map((g) => [g.key, g.fallback])),
   nav_admin: 'Admin',
   footer_contact_label: 'Contact',
   footer_contact_email: 'amberbroihier@gmail.com',
@@ -48,9 +49,12 @@ export default function Layout() {
   // Mobile: everything but Home lives behind a hamburger. Closes on
   // navigation and on any click outside the header.
   const [menuOpen, setMenuOpen] = useState(false)
+  // Which header dropdown (e.g. Experiences) is open, by group id.
+  // Closes on navigation and on any click outside it.
+  const [openGroup, setOpenGroup] = useState(null)
   const { pathname } = useLocation()
   const pageKey = pageKeyFor(pathname)
-  useEffect(() => { setMenuOpen(false) }, [pathname])
+  useEffect(() => { setMenuOpen(false); setOpenGroup(null) }, [pathname])
   useEffect(() => {
     if (!menuOpen) return
     const onDown = (e) => {
@@ -59,6 +63,19 @@ export default function Layout() {
     document.addEventListener('pointerdown', onDown)
     return () => document.removeEventListener('pointerdown', onDown)
   }, [menuOpen])
+  useEffect(() => {
+    if (!openGroup) return
+    const onDown = (e) => {
+      if (!e.target.closest?.('.nav-group')) setOpenGroup(null)
+    }
+    const onKey = (e) => { if (e.key === 'Escape') setOpenGroup(null) }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [openGroup])
 
   // Add a free-positioned image or video near the top-left of the content;
   // Amber drags it wherever she likes over the page. Rides the normal
@@ -124,15 +141,60 @@ export default function Layout() {
             </button>
           </div>
           <nav id="site-nav" className={`nav${menuOpen ? ' is-open' : ''}`} aria-label="Main">
-            {NAV_PAGES.map((p) => (
-              <NavLink key={p.path} to={p.path} end={p.end} className={p.end ? 'nav-home' : undefined}>
-                <EditableText
-                  field={p.key}
-                  value={content[p.key]}
-                  enabled={navEditMode}
-                />
-              </NavLink>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              if (!item.group) {
+                return (
+                  <NavLink key={item.path} to={item.path} end={item.end} className={item.end ? 'nav-home' : undefined}>
+                    <EditableText
+                      field={item.key}
+                      value={content[item.key]}
+                      enabled={navEditMode}
+                    />
+                  </NavLink>
+                )
+              }
+              // A dropdown tab: label only, no page of its own. Lit up
+              // when any of its pages is the current one.
+              const isOpen = openGroup === item.group
+              const isActive = item.pages.some((p) => pathname.startsWith(p.path))
+              // Desktop mouse: hover opens/closes. Done here rather than
+              // in CSS so a click can close the menu while the pointer
+              // is still over it. Touch and the mobile layout ignore it.
+              const hoverable = (e) => e.pointerType === 'mouse' && window.innerWidth > 640
+              return (
+                <div
+                  key={item.group}
+                  className={`nav-group${isOpen ? ' is-open' : ''}`}
+                  onPointerEnter={(e) => { if (hoverable(e)) setOpenGroup(item.group) }}
+                  onPointerLeave={(e) => { if (hoverable(e)) setOpenGroup((g) => (g === item.group ? null : g)) }}
+                >
+                  <button
+                    type="button"
+                    className={`nav-group-btn${isActive ? ' active' : ''}`}
+                    onClick={() => setOpenGroup((g) => (g === item.group ? null : item.group))}
+                    aria-expanded={isOpen}
+                    aria-haspopup="true"
+                  >
+                    <EditableText
+                      field={item.key}
+                      value={content[item.key]}
+                      enabled={navEditMode}
+                    />
+                  </button>
+                  <div className="nav-group-menu">
+                    {item.pages.map((p) => (
+                      <NavLink key={p.path} to={p.path} end={p.end}>
+                        <EditableText
+                          field={p.key}
+                          value={content[p.key]}
+                          enabled={navEditMode}
+                        />
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
             {isAdmin && (
               <NavLink to="/admin">
                 <EditableText

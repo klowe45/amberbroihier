@@ -9,6 +9,7 @@ const BLANK = {
   address: '',
   contact_person: '',
   preferred_contact: '',
+  event_type: '',
   num_employees: '',
   description: '',
   // Honeypot — see backend /api/inquiries for the drop logic. Real users
@@ -16,7 +17,11 @@ const BLANK = {
   website: '',
 }
 
-const EMPLOYEE_RANGES = ['1–10', '11–50', '51–200', '201–500', '500+']
+const EVENT_TYPES = [
+  { value: 'speaker', label: 'Speaker' },
+  { value: 'retreat', label: 'Retreat' },
+  { value: 'workshop', label: 'Workshop' },
+]
 
 export default function InquiryForm() {
   // Draft-persisted: a refresh or accidental close restores the
@@ -60,6 +65,16 @@ export default function InquiryForm() {
       </label>
 
       <label className="field">
+        <span>Contact person</span>
+        <input
+          type="text"
+          required
+          value={values.contact_person}
+          onChange={onChange('contact_person')}
+        />
+      </label>
+
+      <label className="field">
         <span>Address</span>
         <input
           type="text"
@@ -69,48 +84,50 @@ export default function InquiryForm() {
         />
       </label>
 
-      <div className="booking-row">
-        <label className="field">
-          <span>Contact person</span>
-          <input
-            type="text"
-            required
-            value={values.contact_person}
-            onChange={onChange('contact_person')}
-          />
-        </label>
-        <label className="field">
-          <span>Preferred contact</span>
-          <input
-            type="text"
-            placeholder="Email or phone number"
-            value={values.preferred_contact}
-            onChange={onChange('preferred_contact')}
-          />
-        </label>
-      </div>
+      <label className="field">
+        <span>Preferred contact</span>
+        <input
+          type="text"
+          placeholder="Email or phone number"
+          value={values.preferred_contact}
+          onChange={onChange('preferred_contact')}
+        />
+      </label>
 
       <label className="field">
-        <span>Number of employees</span>
-        <select
+        <span>Approximate number of people</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="e.g. 25"
           value={values.num_employees}
           onChange={onChange('num_employees')}
-        >
-          <option value="">Select a range…</option>
-          {EMPLOYEE_RANGES.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
+        />
       </label>
+
+      <fieldset className="field radio-group">
+        <legend>What are you looking for?</legend>
+        {EVENT_TYPES.map((t) => (
+          <label key={t.value} className="radio">
+            <input
+              type="radio"
+              name="event_type"
+              required
+              value={t.value}
+              checked={values.event_type === t.value}
+              onChange={onChange('event_type')}
+            />
+            {t.label}
+          </label>
+        ))}
+      </fieldset>
 
       <label className="field">
         <span>Description</span>
         <textarea
           required
           rows={5}
-          placeholder="Tell Amber what you’re looking for."
+          placeholder="Tell Amber what you’re looking for. This might include your goals, what you hope to get out of it, and any areas your employees are struggling with — paint a picture for her."
           value={values.description}
           onChange={onChange('description')}
         />
