@@ -1,6 +1,7 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
 import EditableText from '../components/EditableText.jsx'
 import Adjustable from '../components/Adjustable.jsx'
+import CustomBlocks from '../components/CustomBlocks.jsx'
 import './Retreats.css'
 
 // Retreats. Same shape as Prices: intro copy plus one big free-form text
@@ -49,6 +50,7 @@ export default function Retreats() {
         />
       </section>
       </Adjustable>
+      <CustomBlocks page="retreats" content={content} />
     </div>
   )
 }

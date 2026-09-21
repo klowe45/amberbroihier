@@ -1,6 +1,7 @@
 import { useSiteContent } from '../lib/useSiteContent.js'
 import EditableText from '../components/EditableText.jsx'
 import Adjustable from '../components/Adjustable.jsx'
+import CustomBlocks from '../components/CustomBlocks.jsx'
 import './Prices.css'
 
 // Amber's products / services with pricing. The whole thing is one big
@@ -50,6 +51,7 @@ export default function Prices() {
         />
       </section>
       </Adjustable>
+      <CustomBlocks page="prices" content={content} />
     </div>
   )
 }

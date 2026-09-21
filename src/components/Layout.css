@@ -59,7 +59,8 @@
 
 .nav a {
   color: var(--text);
-  font-size: 0.95rem;
+  font-family: var(--nav-font, inherit);
+  font-size: var(--nav-size, 0.95rem);
   border-bottom: 1px solid transparent;
   padding-bottom: 2px;
 }
@@ -83,7 +84,8 @@
   border: none;
   padding: 0 0 2px;
   font: inherit;
-  font-size: 0.95rem;
+  font-family: var(--nav-font, inherit);
+  font-size: var(--nav-size, 0.95rem);
   color: var(--text);
   border-bottom: 1px solid transparent;
   cursor: pointer;
@@ -119,7 +121,12 @@
 .nav-group.is-open .nav-group-menu {
   display: flex;
 }
+.nav-group-item {
+  display: flex;
+  align-items: center;
+}
 .nav .nav-group-menu a {
+  flex: 1;
   padding: 0.45rem 0.9rem;
   border-bottom: none;
   white-space: nowrap;
@@ -128,6 +135,35 @@
 .nav .nav-group-menu a.active {
   color: var(--accent);
   background: var(--bg-alt);
+}
+
+/* Nav-edit mode: a ⠿ handle before each tab (and each page inside a
+   dropdown). Drag it onto another tab to take that tab's place. */
+.nav-drag {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0 0.15rem;
+  margin-right: -1.2rem; /* tuck against its tab despite the nav gap */
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.nav-drag:hover { color: var(--accent); }
+.nav-drag:active { cursor: grabbing; }
+.nav .is-drop-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: 4px;
+}
+.nav .is-dragging {
+  opacity: 0.45;
+}
+.nav-group-menu .nav-drag {
+  margin: 0 -0.5rem 0 0.4rem;
 }
 
 .link-btn {
@@ -368,7 +404,11 @@
     background: none;
     align-items: flex-end;
   }
+  .nav-group-item {
+    justify-content: flex-end;
+  }
   .nav .nav-group-menu a {
+    flex: 0 1 auto;
     padding: 0.45rem 0;
     font-size: 1rem;
     text-align: right;
@@ -377,6 +417,8 @@
   .nav .nav-group-menu a.active {
     background: none;
   }
+  /* Reordering is a desktop task; the column layout has no room for handles. */
+  .nav-drag { display: none; }
   /* Admin tools (add image, edit labels, colors) sit in a row at the end. */
   .nav .theme-gear,
   .nav .edit-mode-toggle {

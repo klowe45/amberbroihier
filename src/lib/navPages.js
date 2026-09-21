@@ -50,3 +50,31 @@ export function useSitePages() {
     label: stripHtml(pending[p.key] ?? saved[p.key] ?? p.fallback).trim() || p.fallback,
   }))
 }
+
+// Amber can drag tabs into a new order (nav-edit mode). The order is saved
+// as JSON arrays of ids: nav_order for the header row, nav_order_<group>
+// for the pages inside a dropdown. Anything not in the saved list keeps
+// its default relative position after the ordered ones.
+export const navItemId = (item) => (item.group ? `group:${item.group}` : item.path)
+
+export function sortByNavOrder(items, orderJson) {
+  let order = []
+  try {
+    const a = JSON.parse(orderJson || '[]')
+    if (Array.isArray(a)) order = a
+  } catch { /* unsaved / malformed → default order */ }
+  if (!order.length) return items
+  const rank = (it) => {
+    const i = order.indexOf(navItemId(it))
+    return i < 0 ? Infinity : i
+  }
+  return [...items].sort((a, b) => rank(a) - rank(b))
+}
+
+// NAV_ITEMS in Amber's saved order. `get(key)` reads a content value,
+// letting the caller layer unsaved edits over saved ones.
+export function orderedNavItems(get) {
+  return sortByNavOrder(NAV_ITEMS, get('nav_order')).map((it) =>
+    it.group ? { ...it, pages: sortByNavOrder(it.pages, get(`nav_order_${it.group}`)) } : it
+  )
+}

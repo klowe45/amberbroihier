@@ -3,6 +3,7 @@ import { api } from '../lib/api.js'
 import {
   THEME_COLORS,
   THEME_FONTS,
+  NAV_SIZES,
   FONTS,
   BORDER_SIDES,
   BORDER_WIDTHS,
@@ -59,6 +60,7 @@ export default function ThemeSettings({ open, initial, onClose, onSaved }) {
     const defaults = {}
     for (const c of THEME_COLORS) defaults[c.key] = c.def
     for (const f of THEME_FONTS) defaults[f.key] = f.def
+    defaults.theme_nav_size = ''
     for (const [k, def] of Object.entries(BORDER_DEFAULTS)) defaults[k] = def
     setDraft(defaults)
   }
@@ -69,6 +71,7 @@ export default function ThemeSettings({ open, initial, onClose, onSaved }) {
       const entries = [
         ...THEME_COLORS.map((c) => ({ key: c.key, value: draft[c.key] || '' })),
         ...THEME_FONTS.map((f) => ({ key: f.key, value: draft[f.key] || '' })),
+        { key: 'theme_nav_size', value: draft.theme_nav_size || '' },
         ...Object.keys(BORDER_DEFAULTS).map((k) => ({ key: k, value: draft[k] || '' })),
       ]
       await api.put('/api/content', { entries })
@@ -160,6 +163,7 @@ export default function ThemeSettings({ open, initial, onClose, onSaved }) {
             <label key={f.key} className="theme-font">
               <span className="theme-font-label">{f.label}</span>
               <select value={draft[f.key] || f.def} onChange={(e) => set(f.key, e.target.value)}>
+                {f.inherit && <option value="">{f.inherit}</option>}
                 {FONTS.map((opt) => (
                   <option key={opt.id} value={opt.id}>{opt.label}</option>
                 ))}
@@ -169,6 +173,17 @@ export default function ThemeSettings({ open, initial, onClose, onSaved }) {
               </span>
             </label>
           ))}
+          <label className="theme-font">
+            <span className="theme-font-label">Navigation tab size</span>
+            <select value={draft.theme_nav_size || ''} onChange={(e) => set('theme_nav_size', e.target.value)}>
+              {NAV_SIZES.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <span className="theme-font-sample" style={{ fontSize: draft.theme_nav_size || '0.95rem' }}>
+              Aa
+            </span>
+          </label>
         </section>
 
         {error && <p className="theme-error">{error}</p>}

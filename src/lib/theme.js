@@ -39,6 +39,17 @@ export const FONTS = [
 export const THEME_FONTS = [
   { key: 'theme_font_heading', var: '--serif', label: 'Headings', def: 'system-serif' },
   { key: 'theme_font_body', var: '--sans', label: 'Body text', def: 'system-sans' },
+  // Nav tabs default to the body font; `inherit` is the "same as body" choice.
+  { key: 'theme_font_nav', var: '--nav-font', label: 'Navigation tabs', def: '', inherit: 'Same as body text' },
+]
+
+// Nav tab text size. Blank = the stylesheet default (0.95rem).
+export const NAV_SIZES = [
+  { value: '', label: 'Normal' },
+  { value: '0.85rem', label: 'Small' },
+  { value: '1.05rem', label: 'Large' },
+  { value: '1.15rem', label: 'Larger' },
+  { value: '1.3rem', label: 'Largest' },
 ]
 
 // Decorative frame border drawn at the viewport edges. Each side toggles
@@ -107,6 +118,10 @@ export function applyTheme(content = {}) {
   }
   loadGoogleFonts(families)
 
+  const navSize = (content.theme_nav_size || '').trim()
+  if (navSize) root.style.setProperty('--nav-size', navSize)
+  else root.style.removeProperty('--nav-size')
+
   // Frame border — per side, shared color + width.
   const bw = content.theme_border_width || BORDER_DEFAULTS.theme_border_width
   const bc = (content.theme_border_color || BORDER_DEFAULTS.theme_border_color).trim()
@@ -120,6 +135,7 @@ export function pickTheme(content = {}) {
   const out = {}
   for (const c of THEME_COLORS) out[c.key] = content[c.key] || c.def
   for (const f of THEME_FONTS) out[f.key] = content[f.key] || f.def
+  out.theme_nav_size = content.theme_nav_size || ''
   for (const [k, def] of Object.entries(BORDER_DEFAULTS)) out[k] = content[k] ?? def
   return out
 }

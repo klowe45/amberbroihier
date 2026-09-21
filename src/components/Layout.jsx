@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
 import { useSiteContent } from '../lib/useSiteContent.js'
 import { applyTheme } from '../lib/theme.js'
-import { NAV_PAGES, NAV_GROUPS, NAV_ITEMS } from '../lib/navPages.js'
+import { NAV_PAGES, NAV_GROUPS, navItemId, orderedNavItems } from '../lib/navPages.js'
 import EditableText from './EditableText.jsx'
 import EditBar from './EditBar.jsx'
 import EditModeToggle from './EditModeToggle.jsx'
@@ -98,6 +98,71 @@ export default function Layout() {
   // Footer social icons, from Admin → Socials.
   const socials = parseSocials(content.socials).filter((s) => isSafeUrl(s.url))
 
+  // Tabs in Amber's saved order, with any unsaved reorder layered on top.
+  const navItems = orderedNavItems((k) => pending[k] ?? content[k])
+
+  // Nav-edit mode: drag a tab's ⠿ handle onto another tab to take its
+  // place. Same pointer-event approach as CustomBlocks. `list` is the
+  // sibling set being reordered (the header row, or one dropdown's
+  // pages) and `listKey` where its order is saved.
+  const navEls = useRef(new Map())
+  const [dragNav, setDragNav] = useState(null)
+  const [overNav, setOverNav] = useState(null)
+  const beginNavDrag = (e, list, listKey, id) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const ids = list.map(navItemId)
+    let target = null
+    setDragNav(id)
+    const move = (ev) => {
+      target = null
+      for (const oid of ids) {
+        if (oid === id) continue
+        const el = navEls.current.get(oid)
+        if (!el) continue
+        const r = el.getBoundingClientRect()
+        if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) {
+          target = oid
+          break
+        }
+      }
+      setOverNav(target)
+    }
+    const end = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', end)
+      if (target && target !== id) {
+        const next = ids.filter((x) => x !== id)
+        next.splice(ids.indexOf(target) > ids.indexOf(id) ? next.indexOf(target) + 1 : next.indexOf(target), 0, id)
+        set(listKey, JSON.stringify(next))
+      }
+      setDragNav(null)
+      setOverNav(null)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', end)
+  }
+  const navRef = (id) => (el) => {
+    if (el) navEls.current.set(id, el)
+    else navEls.current.delete(id)
+  }
+  const dragHandle = (list, listKey, id) =>
+    navEditMode ? (
+      <button
+        type="button"
+        className="nav-drag"
+        onPointerDown={(e) => beginNavDrag(e, list, listKey, id)}
+        aria-label="Drag to reorder"
+        title="Drag to reorder"
+      >
+        ⠿
+      </button>
+    ) : null
+  const dragClass = (id) =>
+    `${overNav === id ? ' is-drop-target' : ''}${dragNav === id ? ' is-dragging' : ''}`
+
   // Apply Amber's saved colors + fonts site-wide once the content loads
   // (and again whenever it changes after a publish).
   useEffect(() => { applyTheme(content) }, [content])
@@ -141,30 +206,43 @@ export default function Layout() {
             </button>
           </div>
           <nav id="site-nav" className={`nav${menuOpen ? ' is-open' : ''}`} aria-label="Main">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
+              const id = navItemId(item)
               if (!item.group) {
                 return (
-                  <NavLink key={item.path} to={item.path} end={item.end} className={item.end ? 'nav-home' : undefined}>
-                    <EditableText
-                      field={item.key}
-                      value={content[item.key]}
-                      enabled={navEditMode}
-                    />
-                  </NavLink>
+                  <Fragment key={id}>
+                    {dragHandle(navItems, 'nav_order', id)}
+                    <NavLink
+                      ref={navRef(id)}
+                      to={item.path}
+                      end={item.end}
+                      className={`${item.end ? 'nav-home' : ''}${dragClass(id)}`.trim() || undefined}
+                    >
+                      <EditableText
+                        field={item.key}
+                        value={content[item.key]}
+                        enabled={navEditMode}
+                      />
+                    </NavLink>
+                  </Fragment>
                 )
               }
               // A dropdown tab: label only, no page of its own. Lit up
-              // when any of its pages is the current one.
-              const isOpen = openGroup === item.group
+              // when any of its pages is the current one. Held open in
+              // nav-edit mode so its labels and order can be edited.
+              const isOpen = openGroup === item.group || navEditMode
               const isActive = item.pages.some((p) => pathname.startsWith(p.path))
               // Desktop mouse: hover opens/closes. Done here rather than
               // in CSS so a click can close the menu while the pointer
               // is still over it. Touch and the mobile layout ignore it.
               const hoverable = (e) => e.pointerType === 'mouse' && window.innerWidth > 640
+              const groupOrderKey = `nav_order_${item.group}`
               return (
+                <Fragment key={id}>
+                {dragHandle(navItems, 'nav_order', id)}
                 <div
-                  key={item.group}
-                  className={`nav-group${isOpen ? ' is-open' : ''}`}
+                  ref={navRef(id)}
+                  className={`nav-group${isOpen ? ' is-open' : ''}${dragClass(id)}`}
                   onPointerEnter={(e) => { if (hoverable(e)) setOpenGroup(item.group) }}
                   onPointerLeave={(e) => { if (hoverable(e)) setOpenGroup((g) => (g === item.group ? null : g)) }}
                 >
@@ -182,17 +260,24 @@ export default function Layout() {
                     />
                   </button>
                   <div className="nav-group-menu">
-                    {item.pages.map((p) => (
-                      <NavLink key={p.path} to={p.path} end={p.end}>
-                        <EditableText
-                          field={p.key}
-                          value={content[p.key]}
-                          enabled={navEditMode}
-                        />
-                      </NavLink>
-                    ))}
+                    {item.pages.map((p) => {
+                      const pid = navItemId(p)
+                      return (
+                        <div key={pid} className="nav-group-item">
+                          {dragHandle(item.pages, groupOrderKey, pid)}
+                          <NavLink ref={navRef(pid)} to={p.path} end={p.end} className={dragClass(pid).trim() || undefined}>
+                            <EditableText
+                              field={p.key}
+                              value={content[p.key]}
+                              enabled={navEditMode}
+                            />
+                          </NavLink>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
+                </Fragment>
               )
             })}
             {isAdmin && (
