@@ -9,6 +9,7 @@ const EditContext = createContext({
   pending: {},
   isDirty: false,
   publishTick: 0,
+  publishError: '',
   canUndo: false,
   canRedo: false,
   set: () => {},
@@ -39,6 +40,23 @@ function loadPending() {
   }
 }
 
+// Turn an API error into something Amber can act on.
+function explainPublishFailure(err) {
+  if (err?.status === 413) {
+    return 'Too much to save at once — usually a very large image. Remove the newest image, publish, then re-add it smaller.'
+  }
+  if (err?.status === 401 || err?.status === 403) {
+    return 'Your sign-in expired. Open the login page in another tab, sign in, then come back and press Publish again — your edits are still here.'
+  }
+  if (err?.status >= 500) {
+    return 'The server had a problem saving. Your edits are still here — wait a moment and press Publish again.'
+  }
+  if (err?.status === undefined) {
+    return "Couldn't reach the server. Your edits are still here — check your connection and press Publish again."
+  }
+  return `${err.message || 'Publish failed'} — your edits are still here. Try Publish again.`
+}
+
 export function EditProvider({ children }) {
   // Initialize from localStorage so a refresh doesn't discard Amber's
   // in-progress inline edits. Nothing gets published to the DB until
@@ -46,6 +64,11 @@ export function EditProvider({ children }) {
   // safety net.
   const [pending, setPending] = useState(loadPending)
   const [publishing, setPublishing] = useState(false)
+  // Last failed publish, surfaced in the EditBar. A failed publish used to
+  // reject into the void: the button went back to "Publish", the edits stayed
+  // in the pending buffer (and so kept rendering from localStorage), and it
+  // looked saved to whoever was editing while the live site never changed.
+  const [publishError, setPublishError] = useState('')
   // Bumped after every successful publish; useSiteContent subscribes
   // to it so it re-fetches without needing a full page reload.
   const [publishTick, setPublishTick] = useState(0)
@@ -135,6 +158,7 @@ export function EditProvider({ children }) {
     }))
     if (!entries.length) return
     setPublishing(true)
+    setPublishError('')
     try {
       await api.put('/api/content', { entries })
       setPending({})
@@ -143,10 +167,16 @@ export function EditProvider({ children }) {
       redoStack.current = []
       setHistoryTick((n) => n + 1)
       setPublishTick((n) => n + 1)
+    } catch (err) {
+      // Keep the pending buffer — nothing is lost, she can retry once the
+      // cause is gone. Just make sure she knows it did NOT save.
+      setPublishError(explainPublishFailure(err))
     } finally {
       setPublishing(false)
     }
   }, [pending])
+
+  const dismissPublishError = useCallback(() => setPublishError(''), [])
 
   const isDirty = Object.keys(pending).length > 0
   // historyTick is read so these recompute after every push/pop.
@@ -181,8 +211,8 @@ export function EditProvider({ children }) {
   }, [isDirty])
 
   const value = useMemo(
-    () => ({ pending, isDirty, publishing, publishTick, canUndo, canRedo, set, undo, redo, publish, cancel, refresh }),
-    [pending, isDirty, publishing, publishTick, canUndo, canRedo, set, undo, redo, publish, cancel, refresh]
+    () => ({ pending, isDirty, publishing, publishTick, publishError, dismissPublishError, canUndo, canRedo, set, undo, redo, publish, cancel, refresh }),
+    [pending, isDirty, publishing, publishTick, publishError, dismissPublishError, canUndo, canRedo, set, undo, redo, publish, cancel, refresh]
   )
 
   return <EditContext.Provider value={value}>{children}</EditContext.Provider>

@@ -22,6 +22,46 @@
   font-weight: 500;
 }
 
+.edit-bar-count.is-error {
+  font-weight: 700;
+}
+
+/* Failed-publish banner. Sits above the toolbar row so the edit count and
+   the Publish button stay where they were. */
+.edit-bar-error {
+  position: relative;
+  padding: 0.6rem 2.5rem 0.6rem 1.5rem;
+  background: #7f1d1d;
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.edit-bar-error-title {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.edit-bar-error-x {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.edit-bar-error-x:hover {
+  opacity: 1;
+}
+
 .edit-bar-actions {
   display: flex;
   gap: 0.5rem;

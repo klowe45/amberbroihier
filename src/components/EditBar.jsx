@@ -8,7 +8,7 @@ import './EditBar.css'
 // she undoes everything so Redo is still reachable.)
 export default function EditBar() {
   const { isAdmin } = useAuth()
-  const { pending, isDirty, publishing, publish, cancel, undo, redo, canUndo, canRedo } = useEdit()
+  const { pending, isDirty, publishing, publish, cancel, undo, redo, canUndo, canRedo, publishError, dismissPublishError } = useEdit()
 
   if (!isAdmin || (!isDirty && !canUndo && !canRedo)) return null
 
@@ -16,8 +16,22 @@ export default function EditBar() {
 
   return (
     <div className="edit-bar" role="status" aria-live="polite">
+      {publishError && (
+        <div className="edit-bar-error" role="alert">
+          <span className="edit-bar-error-title">Not saved.</span>{' '}
+          <span>{publishError}</span>
+          <button
+            type="button"
+            className="edit-bar-error-x"
+            onClick={dismissPublishError}
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div className="edit-bar-inner">
-        <span className="edit-bar-count">
+        <span className={`edit-bar-count${publishError ? ' is-error' : ''}`}>
           {count ? `${count} unsaved edit${count === 1 ? '' : 's'}` : 'No unsaved edits'}
         </span>
         <div className="edit-bar-actions">

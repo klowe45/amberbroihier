@@ -11,6 +11,52 @@ import './ImageAddModal.css'
 // it on the page.
 const MAX_BYTES = 2 * 1024 * 1024 // 2 MB — keeps the content payload sane
 
+// Every image on a page is stored inline as a base64 data URL inside one
+// `images_<page>` row, and the whole row is re-sent on every Publish. So a
+// handful of full-size phone photos will blow past any request body limit and
+// the publish fails. Downscale raster uploads to something a web page actually
+// needs before they ever enter the payload.
+const MAX_EDGE = 1600 // px on the longest side
+const JPEG_QUALITY = 0.85
+
+// GIFs (animation) and SVGs (vector) would be ruined by a canvas round-trip.
+const passThrough = (type) => type === 'image/gif' || type === 'image/svg+xml'
+
+function downscaleToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height))
+      // Already small enough and not a heavyweight format — keep the original
+      // bytes rather than re-encoding (and re-compressing) for nothing.
+      if (scale === 1 && file.size <= 400 * 1024) {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = () => reject(new Error('read failed'))
+        reader.readAsDataURL(file)
+        return
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      const ctx = canvas.getContext('2d')
+      // PNGs with transparency would go black on a JPEG background, so paint
+      // white underneath — the site's surfaces are light anyway.
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY))
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('decode failed'))
+    }
+    img.src = url
+  })
+}
+
 export default function ImageAddModal({ onAdd, onClose }) {
   const [kind, setKind] = useState('image')
   const [url, setUrl] = useState('')
@@ -22,7 +68,7 @@ export default function ImageAddModal({ onAdd, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const onFile = (e) => {
+  const onFile = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
@@ -33,10 +79,19 @@ export default function ImageAddModal({ onAdd, onClose }) {
       setError('Please use an image under 2 MB, or paste a hosted URL instead.')
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => onAdd({ type: 'image', src: String(reader.result) })
-    reader.onerror = () => setError('Couldn’t read that file.')
-    reader.readAsDataURL(file)
+    setError('')
+    if (passThrough(file.type)) {
+      const reader = new FileReader()
+      reader.onload = () => onAdd({ type: 'image', src: String(reader.result) })
+      reader.onerror = () => setError('Couldn’t read that file.')
+      reader.readAsDataURL(file)
+      return
+    }
+    try {
+      onAdd({ type: 'image', src: await downscaleToDataUrl(file) })
+    } catch {
+      setError('Couldn’t read that file.')
+    }
   }
 
   const addUrl = () => {
