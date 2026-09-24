@@ -121,3 +121,46 @@ export function stripHtml(value) {
     .replace(/\s+/g, ' ')
     .trim()
 }
+
+// ---- Fluid sizes for display ----------------------------------------------
+// Amber types font sizes in px on a wide screen. Stored as-is (the editor
+// shows exactly what she typed); at display time each size above body-copy
+// size becomes a clamp() that is exactly her value at full width and
+// shrinks toward a smaller size on a phone, so a 56px title doesn't wrap
+// into a tower of lines. Sizes at or below FLUID_FROM never change.
+const FLUID_FROM = 18
+const FLUID_KEEP = 0.55 // share of the size above FLUID_FROM kept on a phone
+const BIG = 28 // px; text this large gets title line spacing when it wraps
+
+const r2 = (n) => Math.round(n * 100) / 100
+
+export function fluidSize(px) {
+  if (px <= FLUID_FROM) return `${px}px`
+  const min = r2(FLUID_FROM + (px - FLUID_FROM) * FLUID_KEEP)
+  return `clamp(${min}px, calc(${min}px + ${r2(px - min)} * var(--fluid-t, 1px)), ${px}px)`
+}
+
+// Rewrites sanitized display HTML: fluid font sizes, and big text marked
+// .rt-big (its block .rt-big-block with --rt-big-fs) for the narrow-screen
+// line spacing in EditableText.css.
+export function fluidize(html) {
+  if (!html || typeof document === 'undefined' || !/font-size/i.test(html)) return html
+  const tpl = document.createElement('template')
+  tpl.innerHTML = html
+  const biggest = new Map() // block → largest px inside it
+  tpl.content.querySelectorAll('[style*="font-size"]').forEach((el) => {
+    const raw = el.style.fontSize
+    const px = parseFloat(raw)
+    if (!/^\d+(\.\d+)?px$/.test(raw) || !(px > 0)) return
+    el.style.fontSize = fluidSize(px)
+    if (px < BIG) return
+    el.classList.add('rt-big')
+    const block = el.closest('p, h1, h2, h3, li, blockquote')
+    if (block && px > (biggest.get(block) ?? 0)) biggest.set(block, px)
+  })
+  biggest.forEach((px, block) => {
+    block.classList.add('rt-big-block')
+    block.style.setProperty('--rt-big-fs', fluidSize(px))
+  })
+  return tpl.innerHTML
+}

@@ -2,6 +2,17 @@
    the "amber" in the name — cream background, deep rust accent,
    charcoal text. Serif headlines, sans body. */
 
+/* Fluid scaling. --fluid-t runs from 0px on a 375px phone to 1px at the
+   full content width (1080px) and beyond, so `calc(N * var(--fluid-t))`
+   interpolates a value across screen sizes. --u is a "scaled pixel": 1px
+   on desktop, 0.6px on a phone — Amber's spacing values are multiplied by
+   it so what she tunes on a wide screen shrinks in proportion on a narrow
+   one instead of staying the same absolute size next to smaller text. */
+:root {
+  --fluid-t: clamp(0px, calc((100vw - 375px) / 705), 1px);
+  --u: calc(0.6px + 0.4 * var(--fluid-t));
+}
+
 :root {
   --bg: #faf7f2;
   --bg-alt: #f2ede4;

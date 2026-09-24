@@ -77,9 +77,11 @@ export default function Adjustable({ id, content = {}, step = 8, grip = true, cl
   // position:fixed child (the "+" block menu), sending it off-screen.
   // Phones ignore the offset (stylesheet !important) — desktop-tuned
   // shifts push text off a narrow screen.
+  // Both are desktop px scaled by --u (index.css), so the space Amber set
+  // shrinks in proportion with the text on a narrower screen.
   const style = {}
-  if (gap) style.marginTop = gap
-  if (shift) style.left = shift
+  if (gap) style.marginTop = `calc(${gap} * var(--u))`
+  if (shift) style.left = `calc(${shift} * var(--u))`
 
   return (
     <>

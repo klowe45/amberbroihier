@@ -728,6 +728,9 @@ span.rich-text {
 }
 
 /* ---------- Line spacing & paragraph gap (block classes) ---------- */
+/* Gaps are Amber's px values scaled by --u (1px on desktop, shrinking to
+   0.6px on a phone — see index.css) so spacing stays in proportion with
+   the text as the screen narrows. */
 :is(.rich-text, .ql-editor.rich-text) .ql-lh-08, .editable-editor .ql-editor .ql-lh-08 { line-height: 0.8 !important; }
 :is(.rich-text, .ql-editor.rich-text) .ql-lh-09, .editable-editor .ql-editor .ql-lh-09 { line-height: 0.9 !important; }
 :is(.rich-text, .ql-editor.rich-text) .ql-lh-10, .editable-editor .ql-editor .ql-lh-10 { line-height: 1 !important; }
@@ -737,19 +740,19 @@ span.rich-text {
 :is(.rich-text, .ql-editor.rich-text) .ql-lh-18, .editable-editor .ql-editor .ql-lh-18 { line-height: 1.8 !important; }
 :is(.rich-text, .ql-editor.rich-text) .ql-lh-20, .editable-editor .ql-editor .ql-lh-20 { line-height: 2 !important; }
 :is(.rich-text, .ql-editor.rich-text) .ql-lh-25, .editable-editor .ql-editor .ql-lh-25 { line-height: 2.5 !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-n24, .editable-editor .ql-editor .ql-gap-n24 { margin-bottom: -24px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-n16, .editable-editor .ql-editor .ql-gap-n16 { margin-bottom: -16px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-n12, .editable-editor .ql-editor .ql-gap-n12 { margin-bottom: -12px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-n8, .editable-editor .ql-editor .ql-gap-n8 { margin-bottom: -8px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-n4, .editable-editor .ql-editor .ql-gap-n4 { margin-bottom: -4px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-0, .editable-editor .ql-editor .ql-gap-0 { margin-bottom: 0px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-2, .editable-editor .ql-editor .ql-gap-2 { margin-bottom: 2px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-4, .editable-editor .ql-editor .ql-gap-4 { margin-bottom: 4px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-8, .editable-editor .ql-editor .ql-gap-8 { margin-bottom: 8px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-16, .editable-editor .ql-editor .ql-gap-16 { margin-bottom: 16px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-24, .editable-editor .ql-editor .ql-gap-24 { margin-bottom: 24px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-32, .editable-editor .ql-editor .ql-gap-32 { margin-bottom: 32px !important; }
-:is(.rich-text, .ql-editor.rich-text) .ql-gap-48, .editable-editor .ql-editor .ql-gap-48 { margin-bottom: 48px !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n24, .editable-editor .ql-editor .ql-gap-n24 { margin-bottom: calc(-24 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n16, .editable-editor .ql-editor .ql-gap-n16 { margin-bottom: calc(-16 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n12, .editable-editor .ql-editor .ql-gap-n12 { margin-bottom: calc(-12 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n8, .editable-editor .ql-editor .ql-gap-n8 { margin-bottom: calc(-8 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-n4, .editable-editor .ql-editor .ql-gap-n4 { margin-bottom: calc(-4 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-0, .editable-editor .ql-editor .ql-gap-0 { margin-bottom: calc(0 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-2, .editable-editor .ql-editor .ql-gap-2 { margin-bottom: calc(2 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-4, .editable-editor .ql-editor .ql-gap-4 { margin-bottom: calc(4 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-8, .editable-editor .ql-editor .ql-gap-8 { margin-bottom: calc(8 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-16, .editable-editor .ql-editor .ql-gap-16 { margin-bottom: calc(16 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-24, .editable-editor .ql-editor .ql-gap-24 { margin-bottom: calc(24 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-32, .editable-editor .ql-editor .ql-gap-32 { margin-bottom: calc(32 * var(--u)) !important; }
+:is(.rich-text, .ql-editor.rich-text) .ql-gap-48, .editable-editor .ql-editor .ql-gap-48 { margin-bottom: calc(48 * var(--u)) !important; }
 /* A gap class on a paragraph beats the default p + p spacing rule. */
 :is(.rich-text, .ql-editor.rich-text) [class*='ql-gap-'] + p,
 :is(.rich-text, .ql-editor.rich-text) [class*='ql-gap-'] + h1, :is(.rich-text, .ql-editor.rich-text) [class*='ql-gap-'] + h2, :is(.rich-text, .ql-editor.rich-text) [class*='ql-gap-'] + h3 {
@@ -807,3 +810,20 @@ span.rich-text {
 .editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='32']::before { content: '32px'; }
 .editable-editor .ql-picker.ql-paragap .ql-picker-label[data-value='48']::before { content: '↧ 48px'; }
 .editable-editor .ql-picker.ql-paragap .ql-picker-item[data-value='48']::before { content: '48px'; }
+
+/* ---------- Large text on narrower screens ----------
+   Amber sets sizes and spacing on a wide screen, where a big title sits on
+   one line. Narrower, it wraps — and a title inherits the page's body line
+   spacing (1.55–1.75), so its wrapped lines hang far apart. Below full
+   width, big text (marked .rt-big by fluidize() in richTextView.js) gets a
+   title-appropriate line height, and its paragraph gets back the space the
+   tighter first/last line gave up, so the gap to the next block stays as
+   she set it. A block where she picked a line spacing herself is left alone. */
+@media (max-width: 1079px) {
+  .rich-text .rt-big:not([class*='ql-lh-'] .rt-big) {
+    line-height: 1.2;
+  }
+  .rich-text .rt-big-block:not([class*='ql-lh-']) {
+    padding-block: calc(var(--rt-big-fs) * 0.25);
+  }
+}

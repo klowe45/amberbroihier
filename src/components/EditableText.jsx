@@ -7,6 +7,7 @@ import { useContentValue } from '../lib/useSiteContent.js'
 import {
   looksLikeHtml,
   sanitize,
+  fluidize,
   toEditorHtml,
   fromEditorHtml,
   ensureFontsFor,
@@ -154,7 +155,7 @@ export default function EditableText({
   // Effective display value: prefer pending, then saved, then placeholder.
   const displayed = pending[field] ?? value ?? ''
   const isHtml = looksLikeHtml(displayed)
-  const safeHtml = useMemo(() => (isHtml ? sanitize(displayed) : ''), [displayed, isHtml])
+  const safeHtml = useMemo(() => (isHtml ? fluidize(sanitize(displayed)) : ''), [displayed, isHtml])
   // Pull in any Google font the stored HTML uses (no-op otherwise).
   useEffect(() => { ensureFontsFor(safeHtml) }, [safeHtml])
 
