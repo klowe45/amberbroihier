@@ -1,8 +1,9 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState, Suspense } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
 import { useSiteContent } from '../lib/useSiteContent.js'
+import { pageKeyFor } from '../lib/pageKey.js'
 import { applyTheme } from '../lib/theme.js'
 import { NAV_PAGES, NAV_GROUPS, navItemId, orderedNavItems } from '../lib/navPages.js'
 import EditableText from './EditableText.jsx'
@@ -19,13 +20,6 @@ import './Layout.css'
 
 const genImgId = () =>
   'img_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3)
-
-// The add-image affordance is available on content pages, not functional ones.
-function pageKeyFor(pathname) {
-  if (pathname === '/') return 'home'
-  if (pathname.startsWith('/login') || pathname.startsWith('/admin')) return null
-  return pathname.replace(/^\/+/, '').replace(/\//g, '_')
-}
 
 const NAV_FALLBACK = {
   brand: 'Amber Broihier',
@@ -89,8 +83,8 @@ export default function Layout() {
       if (Array.isArray(parsed)) list = parsed
     } catch { /* start fresh */ }
     const item = type === 'video'
-      ? { id: genImgId(), type: 'video', src, x: 24, y: 24, w: 480 }
-      : { id: genImgId(), src, x: 24, y: 24, w: 320 }
+      ? { id: genImgId(), type: 'video', src, x: 24, y: 24, w: 480, anchor: 'column' }
+      : { id: genImgId(), src, x: 24, y: 24, w: 320, anchor: 'column' }
     set(listKey, JSON.stringify([...list, item]))
     setAddImageOpen(false)
   }
@@ -345,7 +339,13 @@ export default function Layout() {
       )}
 
       <main className="site-main">
-        <Outlet />
+        {/* Routes that only Amber reaches (the admin area, and the blog editor
+            it contains) are code-split, so a visitor never downloads them.
+            The fallback is deliberately empty — the chunk is a few KB from the
+            same origin, and a spinner would flash. */}
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
         {pageKey && <ImageLayer page={pageKey} content={content} />}
         {isAdmin && pageKey && (
           <PageContextMenu pageKey={pageKey} onAddMedia={() => setAddImageOpen(true)} />

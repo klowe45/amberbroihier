@@ -6,6 +6,15 @@
     <meta name="description" content="Amber Broihier — speaker, writer, and communicator. Book Amber, read her latest work, and watch recent talks." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Amber Broihier</title>
+    <!-- The page can't render its real copy until GET /api/content returns, and
+         that's a different origin — so pay the DNS + TLS cost now, in parallel
+         with the bundle, instead of after it. Vite substitutes the env value at
+         build time. -->
+    <link rel="preconnect" href="%VITE_API_BASE_URL%" crossorigin />
+    <link rel="dns-prefetch" href="%VITE_API_BASE_URL%" />
+    <!-- Amber's theme picks Google-hosted fonts; warm that connection too. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Start Single Page Apps for GitHub Pages -->
     <script type="text/javascript">
       // https://github.com/rafgraph/spa-github-pages

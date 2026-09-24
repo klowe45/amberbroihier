@@ -9,7 +9,7 @@ import AnalyticsPanel from './admin/AnalyticsPanel.jsx'
 import SocialsManager from './admin/SocialsManager.jsx'
 import WaiverInbox from './admin/WaiverInbox.jsx'
 import './Admin.css'
-import { stripHtml } from '../lib/richText.js'
+import { stripHtml } from '../lib/richTextView.js'
 
 const TABS = [
   { id: 'bookings', label: 'Inquiries' },

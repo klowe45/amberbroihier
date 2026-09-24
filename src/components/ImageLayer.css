@@ -110,8 +110,23 @@
   touch-action: none;
   display: none;
 }
-.image-item:hover .image-resize {
+.image-item:hover .image-resize,
+/* Keep the handle alive mid-drag: the cursor leaves the figure as soon as you
+   shrink something, and a display:none handle drops the gesture. */
+.image-item.is-dragging .image-resize {
   display: block;
+}
+
+/* Nothing inside a dragging item should react to the pointer — a player would
+   otherwise grab the stream of move events and stall the drag. */
+.image-item.is-dragging iframe,
+.image-item.is-dragging video,
+.image-item.is-dragging img {
+  pointer-events: none;
+}
+
+.image-layer.is-admin .image-item.is-dragging {
+  outline-color: var(--accent);
 }
 
 /* Shows which staged position (Desktop vs Mobile) is being edited — appears on

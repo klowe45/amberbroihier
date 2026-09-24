@@ -1,6 +1,6 @@
 import { useEdit } from './EditContext.jsx'
 import { useContentMap } from './useSiteContent.js'
-import { stripHtml } from './richText.js'
+import { stripHtml } from './richTextView.js'
 
 // The site's public pages, in header order. One list drives both the
 // header nav and the "Goes to" choices when Amber adds a button, so the

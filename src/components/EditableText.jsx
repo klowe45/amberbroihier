@@ -1,27 +1,17 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import ReactQuill from 'react-quill-new'
-import 'react-quill-new/dist/quill.snow.css'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
 import { useContentValue } from '../lib/useSiteContent.js'
 import {
-  singleLineModules,
-  multilineModules,
-  richFormats,
   looksLikeHtml,
   sanitize,
   toEditorHtml,
   fromEditorHtml,
   ensureFontsFor,
   preloadAllFonts,
-  installToolbarExtras,
-  insertBlock,
-  installButtonDrag,
-  replaceButton,
-  INSERT_BLOCKS,
-} from '../lib/richText.js'
+} from '../lib/richTextView.js'
 import { useSitePages } from '../lib/navPages.js'
 import './EditableText.css'
 
@@ -58,6 +48,33 @@ import './EditableText.css'
 //                 The size is stored in site_content as `size_<field>`
 //                 (JSON {w, h} in px) and rides the Publish flow.
 
+// Quill and everything that registers into it (~139 KB JS + its stylesheet)
+// load only when an admin is on the page. A visitor renders stored HTML with
+// the helpers in richTextView.js and never downloads the editor at all.
+let editorKit = null
+let editorKitPromise = null
+
+function loadEditorKit() {
+  if (editorKit) return Promise.resolve(editorKit)
+  if (!editorKitPromise) {
+    editorKitPromise = Promise.all([
+      import('react-quill-new'),
+      import('react-quill-new/dist/quill.snow.css'),
+      import('../lib/richText.js'),
+    ])
+      .then(([quill, , rich]) => {
+        editorKit = { ReactQuill: quill.default, ...rich }
+        return editorKit
+      })
+      .catch((err) => {
+        // Let the next attempt retry rather than caching the failure.
+        editorKitPromise = null
+        throw err
+      })
+  }
+  return editorKitPromise
+}
+
 const parseSize = (raw) => {
   try {
     const o = JSON.parse(raw)
@@ -84,6 +101,16 @@ export default function EditableText({
   const { pending, set } = useEdit()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
+  // Null until the editor bundle has arrived. Fetched as soon as we know an
+  // admin is looking, so it's ready long before the first click.
+  const [kit, setKit] = useState(editorKit)
+
+  useEffect(() => {
+    if (!isAdmin || !enabled || kit) return
+    let cancelled = false
+    loadEditorKit().then((k) => { if (!cancelled) setKit(k) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [isAdmin, enabled, kit])
   // Gutter "+" menu (multiline fields) and the Button dialog it can open.
   const [menuOpen, setMenuOpen] = useState(false)
   // Fixed-position anchor for the menu: below the + when there's room,
@@ -152,7 +179,7 @@ export default function EditableText({
   // Focus + toolbar placement run on a timeout: StrictMode recreates
   // the Quill instance right after mount, so grab it fresh.
   useLayoutEffect(() => {
-    if (!editing) return
+    if (!editing || !kit) return
     const host = wrapRef.current
     if (!host) return
     host.__editable = {
@@ -164,12 +191,12 @@ export default function EditableText({
     const t = setTimeout(() => {
       const quill = quillRef.current?.getEditor?.()
       if (!quill) return
-      installToolbarExtras(quill)
+      kit.installToolbarExtras(quill)
       // Same stylesheet rules as the published text, so what she sees
       // while typing is what visitors see (spacing, headings, lists…).
       quill.root.classList.add('rich-text')
       // Click a button in the editor to edit it; drag to move it.
-      cleanupDrag = installButtonDrag(quill, (index, initial) =>
+      cleanupDrag = kit.installButtonDrag(quill, (index, initial) =>
         setButtonDialog({ index, initial })
       )
       quill.focus()
@@ -177,7 +204,7 @@ export default function EditableText({
       if (queuedInsert.current) {
         const { key, payload } = queuedInsert.current
         queuedInsert.current = null
-        insertBlock(quill, key, payload)
+        kit.insertBlock(quill, key, payload)
       }
       // Toolbar floats above the field. If that runs off the right edge
       // of the window, anchor it to the field's right side; if it ends up
@@ -198,7 +225,7 @@ export default function EditableText({
       cleanupDrag?.()
       delete host.__editable
     }
-  }, [editing, multiline])
+  }, [editing, multiline, kit])
 
   // Clicking anywhere outside the editor + its toolbar finishes the edit
   // (the toolbar steals focus, so a plain blur listener can't be used).
@@ -261,7 +288,7 @@ export default function EditableText({
   const applyInsert = (key, payload) => {
     setMenuOpen(false)
     const quill = editing ? quillRef.current?.getEditor?.() : null
-    if (quill) insertBlock(quill, key, payload)
+    if (quill) kit.insertBlock(quill, key, payload)
     else {
       queuedInsert.current = { key, payload }
       if (!editing) startEditing()
@@ -306,7 +333,12 @@ export default function EditableText({
   const startEditing = () => {
     draftRef.current = toEditorHtml(displayed)
     preloadAllFonts()
-    setEditing(true)
+    if (kit) {
+      setEditing(true)
+      return
+    }
+    // Cold connection: the click still works, it just waits for the editor.
+    loadEditorKit().then((k) => { setKit(k); setEditing(true) }).catch(() => {})
   }
 
   // Top-right controls: "+" (multiline fields only) inserts a block at the
@@ -356,7 +388,7 @@ export default function EditableText({
       )}
       {menuOpen && (
         <span className="editable-plus-menu" role="menu" style={menuPos ?? undefined}>
-          {INSERT_BLOCKS.map((b) => (
+          {(kit?.INSERT_BLOCKS ?? []).map((b) => (
             <button
               key={b.key}
               type="button"
@@ -378,14 +410,14 @@ export default function EditableText({
             const idx = buttonDialog.index
             setButtonDialog(false)
             const quill = quillRef.current?.getEditor?.()
-            if (quill) replaceButton(quill, idx, null)
+            if (quill) kit.replaceButton(quill, idx, null)
           } : undefined}
           onSave={(payload) => {
             const editingExisting = buttonDialog.initial ? buttonDialog.index : null
             setButtonDialog(false)
             if (editingExisting != null) {
               const quill = quillRef.current?.getEditor?.()
-              if (quill) replaceButton(quill, editingExisting, payload)
+              if (quill) kit.replaceButton(quill, editingExisting, payload)
             } else {
               applyInsert('button', payload)
             }
@@ -396,7 +428,7 @@ export default function EditableText({
     </>
   )
 
-  if (editing) {
+  if (editing && kit) {
     return (
       <div
         ref={wrapRef}
@@ -407,13 +439,13 @@ export default function EditableText({
         onClick={(e) => { e.stopPropagation(); e.preventDefault() }}
       >
         {plus}
-        <ReactQuill
+        <kit.ReactQuill
           ref={quillRef}
           theme="snow"
           defaultValue={draftRef.current}
           onChange={(html) => { draftRef.current = html }}
-          modules={multiline ? multilineModules : singleLineModules}
-          formats={richFormats}
+          modules={multiline ? kit.multilineModules : kit.singleLineModules}
+          formats={kit.richFormats}
           placeholder={placeholder}
         />
       </div>

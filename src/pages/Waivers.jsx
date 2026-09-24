@@ -2,7 +2,7 @@ import { useSiteContent } from '../lib/useSiteContent.js'
 import EditableText from '../components/EditableText.jsx'
 import Adjustable from '../components/Adjustable.jsx'
 import WaiverForm from '../components/WaiverForm.jsx'
-import { stripHtml } from '../lib/richText.js'
+import { stripHtml } from '../lib/richTextView.js'
 import './Waivers.css'
 
 // Waivers. Same shape as Prices / Retreats: intro copy plus one big

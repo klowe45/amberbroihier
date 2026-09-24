@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext.jsx'
 import { EditProvider } from './lib/EditContext.jsx'
@@ -14,9 +15,12 @@ import Book from './pages/Book.jsx'
 import Inquiry from './pages/Inquiry.jsx'
 import Blog from './pages/Blog.jsx'
 import BlogPost from './pages/BlogPost.jsx'
-import Login from './pages/Login.jsx'
-import Admin from './pages/Admin.jsx'
 import NotFound from './pages/NotFound.jsx'
+
+// Split out of the visitor bundle: the admin area carries the blog editor
+// (and with it Quill), and the login page is only ever hit by Amber.
+const Login = lazy(() => import('./pages/Login.jsx'))
+const Admin = lazy(() => import('./pages/Admin.jsx'))
 
 function App() {
   return (

@@ -12,8 +12,24 @@ import './ImageLayer.css'
 // placement; mx/my/mw the mobile placement (falling back to desktop until set).
 // You edit whichever view the browser is currently showing, so moving it on one
 // never disturbs the other. Persists on Publish.
+//
+// x is measured from the left edge of the centered content column, not the
+// window: the text sits in a max-width column that re-centers as the window
+// changes width, so a window-relative x left images stranded away from the
+// copy they were placed beside whenever the page was viewed at another width.
+// Images saved before that change have no `anchor` and a window-relative x;
+// they render exactly where they always did until Amber next moves or resizes
+// them on desktop, which re-saves them as `anchor: 'column'`.
 
 const MOBILE_MQ = '(max-width: 640px)'
+
+// Left edge of the `.container` column inside a layer of the given width.
+function columnLeftFor(width) {
+  const max = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--max-content')
+  )
+  return Number.isFinite(max) ? Math.max(0, (width - max) / 2) : 0
+}
 
 const parseList = (raw) => {
   try {
@@ -41,15 +57,35 @@ export default function ImageLayer({ page, content = {} }) {
     return () => mq.removeEventListener('change', on)
   }, [])
 
+  // Where the content column starts, tracked as the layer (full page width)
+  // resizes. Seeded from the viewport so the first paint is already right.
+  const [layerEl, setLayerEl] = useState(null)
+  const [colLeft, setColLeft] = useState(() =>
+    typeof window === 'undefined' ? 0 : columnLeftFor(document.documentElement.clientWidth)
+  )
+  useEffect(() => {
+    if (!layerEl) return
+    const measure = () => setColLeft(columnLeftFor(layerEl.clientWidth))
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(layerEl)
+    return () => ro.disconnect()
+  }, [layerEl])
+
   const listKey = `images_${page}`
   const images = parseList(pending[listKey] ?? content[listKey] ?? '[]')
   if (!images.length && !isAdmin) return null
 
+  // Desktop x in column coordinates, converting a legacy window-relative x.
+  // (mx needs no conversion: at mobile widths the column starts at 0, so the
+  // two coordinate systems coincide.)
+  const colX = (img) => (img.anchor === 'column' ? img.x : img.x - colLeft)
+
   // The position for the current view (mobile falls back to desktop until set).
   const posFor = (img) =>
     isMobile
-      ? { x: img.mx ?? img.x, y: img.my ?? img.y, w: img.mw ?? img.w }
-      : { x: img.x, y: img.y, w: img.w }
+      ? { x: img.mx ?? colX(img), y: img.my ?? img.y, w: img.mw ?? img.w }
+      : { x: colX(img), y: img.y, w: img.w }
 
   const liveOf = (img) => {
     const base = posFor(img)
@@ -61,8 +97,22 @@ export default function ImageLayer({ page, content = {} }) {
 
   const startGesture = (e, img, mode) => {
     if (!isAdmin) return
+    // Left button / touch / pen only — a right-click opens the page menu.
+    if (e.button !== undefined && e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
+
+    // A YouTube iframe (and a <video> with controls) swallows every pointer
+    // event that lands on it, so the moment the cursor crossed the player the
+    // drag stopped following it. Capturing the pointer on the handle routes
+    // the whole gesture back to us no matter what it passes over.
+    const handle = e.currentTarget
+    try {
+      handle.setPointerCapture(e.pointerId)
+    } catch {
+      // Not fatal — older browsers just fall back to the window listeners.
+    }
+
     const startX = e.clientX
     const startY = e.clientY
     const orig = posFor(img)
@@ -74,36 +124,43 @@ export default function ImageLayer({ page, content = {} }) {
       } else {
         cur.w = Math.max(60, Math.round(orig.w + (ev.clientX - startX)))
       }
-      dragRef.current = { id: img.id, cur }
+      dragRef.current = { id: img.id, cur, mode }
       force()
     }
     const up = () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+      try {
+        handle.releasePointerCapture(e.pointerId)
+      } catch {
+        // Already released (pointercancel, element re-rendered) — nothing to do.
+      }
       // Write only the CURRENT view's fields, leaving the other view untouched.
       set(listKey, JSON.stringify(images.map((im) => {
         if (im.id !== img.id) return im
         return isMobile
           ? { ...im, mx: cur.x, my: cur.y, mw: cur.w }
-          : { ...im, x: cur.x, y: cur.y, w: cur.w }
+          : { ...im, x: cur.x, y: cur.y, w: cur.w, anchor: 'column' }
       })))
       dragRef.current = null
       force()
     }
-    dragRef.current = { id: img.id, cur }
+    dragRef.current = { id: img.id, cur, mode }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
   }
 
   return (
-    <div className={`image-layer${isAdmin ? ' is-admin' : ''}`}>
+    <div ref={setLayerEl} className={`image-layer${isAdmin ? ' is-admin' : ''}`}>
       {images.map((img) => {
         const p = liveOf(img)
         return (
           <figure
             key={img.id}
-            className="image-item"
-            style={{ left: p.x, top: p.y, width: p.w }}
+            className={`image-item${dragRef.current?.id === img.id ? ' is-dragging' : ''}`}
+            style={{ left: colLeft + p.x, top: p.y, width: p.w }}
           >
             {img.type === 'video' ? (
               <div className="image-video">

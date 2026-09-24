@@ -1,66 +1,87 @@
 import { useEffect, useState } from 'react'
-import { toEmbedUrl, isVideoFileUrl } from '../lib/embedUrl.js'
+import { toEmbedUrl, isVideoFileUrl, isKnownVideoHost } from '../lib/embedUrl.js'
 import './ImageAddModal.css'
 
 // Small modal for adding an image or a video to the current page.
 //   Image: paste a URL or upload a file (read as a data URL so it needs no
 //          separate file storage).
 //   Video: paste a YouTube / Vimeo link (embedded player) or a direct link
-//          to a video file (.mp4 / .webm / .mov).
+//          to a video file (.mp4 / .webm / .mov). Video FILES aren't uploaded
+//          — a real video inlined as base64 would ride along in every
+//          visitor's /api/content response.
 // onAdd is called with { type: 'image' | 'video', src }; the caller places
 // it on the page.
-const MAX_BYTES = 2 * 1024 * 1024 // 2 MB — keeps the content payload sane
 
 // Every image on a page is stored inline as a base64 data URL inside one
-// `images_<page>` row, and the whole row is re-sent on every Publish. So a
-// handful of full-size phone photos will blow past any request body limit and
-// the publish fails. Downscale raster uploads to something a web page actually
-// needs before they ever enter the payload.
-const MAX_EDGE = 1600 // px on the longest side
-const JPEG_QUALITY = 0.85
+// `images_<page>` row, and the whole row is re-sent on every Publish — so an
+// upload is downscaled to what a web page actually needs before it ever
+// enters the payload. Because of that we can accept a straight-off-the-phone
+// photo: 100 MB in, a couple hundred KB out.
+const MAX_BYTES = 100 * 1024 * 1024
 
-// GIFs (animation) and SVGs (vector) would be ruined by a canvas round-trip.
+// GIF (animation) and SVG (vector) would be ruined by a canvas round-trip, so
+// they go in untouched — which means they need a tighter cap is
+// really the backend's: 100 MB is ~133 MB once base64'd, which is what the
+// /api/content body limit is sized for.
+const MAX_PASSTHROUGH_BYTES = 100 * 1024 * 1024
 const passThrough = (type) => type === 'image/gif' || type === 'image/svg+xml'
 
-function downscaleToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      const scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height))
-      // Already small enough and not a heavyweight format — keep the original
-      // bytes rather than re-encoding (and re-compressing) for nothing.
-      if (scale === 1 && file.size <= 400 * 1024) {
-        const reader = new FileReader()
-        reader.onload = () => resolve(String(reader.result))
-        reader.onerror = () => reject(new Error('read failed'))
-        reader.readAsDataURL(file)
-        return
-      }
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.round(img.width * scale)
-      canvas.height = Math.round(img.height * scale)
-      const ctx = canvas.getContext('2d')
-      // PNGs with transparency would go black on a JPEG background, so paint
-      // white underneath — the site's surfaces are light anyway.
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY))
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('decode failed'))
-    }
-    img.src = url
+const MAX_EDGE = 1600 // px on the longest side
+const QUALITY = 0.85
+
+const readAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error('read failed'))
+    reader.readAsDataURL(file)
   })
+
+const loadImage = (src) =>
+  new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('decode failed'))
+    img.src = src
+  })
+
+// Encode the canvas, keeping transparency when the source had any. JPEG can't
+// hold an alpha channel — a logo with a transparent background would come out
+// on a white box — so anything that isn't already a JPEG is encoded as WebP,
+// falling back to PNG on browsers whose canvas won't write WebP.
+function encode(canvas, sourceType) {
+  if (sourceType === 'image/jpeg' || sourceType === 'image/jpg') {
+    return canvas.toDataURL('image/jpeg', QUALITY)
+  }
+  const webp = canvas.toDataURL('image/webp', QUALITY)
+  return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/png')
+}
+
+// Returns a data URL no larger than simply inlining the original file.
+async function toStoredDataUrl(file) {
+  const original = await readAsDataUrl(file)
+  const img = await loadImage(original)
+
+  const scale = Math.min(1, MAX_EDGE / Math.max(img.naturalWidth, img.naturalHeight))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(img.naturalWidth * scale)
+  canvas.height = Math.round(img.naturalHeight * scale)
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+  const encoded = encode(canvas, file.type)
+  // Re-encoding a small, already-optimised file can make it bigger. Keep
+  // whichever is smaller.
+  return encoded.length < original.length ? encoded : original
 }
 
 export default function ImageAddModal({ onAdd, onClose }) {
   const [kind, setKind] = useState('image')
   const [url, setUrl] = useState('')
   const [error, setError] = useState('')
+  // A big photo takes a moment to decode + re-encode; say so rather than
+  // looking frozen.
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
@@ -71,32 +92,62 @@ export default function ImageAddModal({ onAdd, onClose }) {
   const onFile = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) {
+    // Some phones hand over a HEIC with an empty `type`, so don't reject on
+    // the MIME type alone — let the decode be the judge.
+    if (file.type && !file.type.startsWith('image/')) {
       setError('That file isn’t an image.')
       return
     }
-    if (file.size > MAX_BYTES) {
-      setError('Please use an image under 2 MB, or paste a hosted URL instead.')
-      return
-    }
     setError('')
-    if (passThrough(file.type)) {
-      const reader = new FileReader()
-      reader.onload = () => onAdd({ type: 'image', src: String(reader.result) })
-      reader.onerror = () => setError('Couldn’t read that file.')
-      reader.readAsDataURL(file)
-      return
-    }
+    setBusy(true)
     try {
-      onAdd({ type: 'image', src: await downscaleToDataUrl(file) })
+      if (passThrough(file.type)) {
+        if (file.size > MAX_PASSTHROUGH_BYTES) {
+          setError(
+            file.type === 'image/gif'
+              ? 'That GIF is over 100 MB. Animated GIFs are saved as-is, so please use a smaller one or host it and paste the link.'
+              : 'That SVG is over 100 MB. Please use a smaller one or host it and paste the link.'
+          )
+          return
+        }
+        onAdd({ type: 'image', src: await readAsDataUrl(file) })
+        return
+      }
+      if (file.size > MAX_BYTES) {
+        setError('That image is over 100 MB. Please use a smaller one, or paste a hosted image link instead.')
+        return
+      }
+      onAdd({ type: 'image', src: await toStoredDataUrl(file) })
     } catch {
-      setError('Couldn’t read that file.')
+      // Chrome and Firefox can't decode HEIC/HEIF — the format iPhones shoot
+      // by default. Tell her what to actually do about it.
+      if (/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name || '')) {
+        setError(
+          'This browser can’t read iPhone HEIC photos. On your iPhone: Settings → Camera → Formats → Most Compatible, or open the photo and share it as a JPEG. Safari can read HEIC directly.'
+        )
+      } else {
+        setError('Couldn’t read that file. Try a PNG or JPG.')
+      }
+    } finally {
+      setBusy(false)
+      // Let her pick the same file again after a failure.
+      e.target.value = ''
     }
   }
 
   const addUrl = () => {
-    const v = url.trim()
+    let v = url.trim()
     if (!v) return
+    // Copying from the address bar often drops the scheme ("youtube.com/…").
+    // Add it back rather than making her retype the whole thing.
+    if (!/^https?:\/\//i.test(v)) {
+      if (/^[\w-]+(\.[\w-]+)+(?:[/:?#]|$)/.test(v)) {
+        v = `https://${v}`
+      } else {
+        setError('Paste the full web address, starting with https://')
+        return
+      }
+    }
     if (kind === 'image') {
       onAdd({ type: 'image', src: v })
       return
@@ -105,12 +156,18 @@ export default function ImageAddModal({ onAdd, onClose }) {
       onAdd({ type: 'video', src: v })
       return
     }
-    const embed = toEmbedUrl(v)
-    if (!embed || !/^https?:\/\//i.test(embed) || embed === v && !/youtube|vimeo/i.test(v)) {
-      setError('Paste a YouTube or Vimeo link, or a direct link to a video file (.mp4).')
+    if (isKnownVideoHost(v)) {
+      const embed = toEmbedUrl(v)
+      if (!embed) {
+        setError(
+          'That’s a YouTube or Vimeo address, but there’s no video in it. Open the video itself and use Share → Copy link.'
+        )
+        return
+      }
+      onAdd({ type: 'video', src: embed })
       return
     }
-    onAdd({ type: 'video', src: embed })
+    setError('Paste a YouTube or Vimeo link, or a direct link to a video file (.mp4, .webm, .mov).')
   }
 
   const switchKind = (k) => { setKind(k); setError(''); setUrl('') }
@@ -134,8 +191,12 @@ export default function ImageAddModal({ onAdd, onClose }) {
           <>
             <label className="imgadd-field">
               <span>Upload from your computer</span>
-              <input type="file" accept="image/*" onChange={onFile} />
-              <small>PNG, JPG, GIF, or SVG up to 2 MB.</small>
+              <input type="file" accept="image/*,.heic,.heif" onChange={onFile} disabled={busy} />
+              <small>
+                {busy
+                  ? 'Preparing your image…'
+                  : 'PNG, JPG, WebP, AVIF or HEIC up to 12 MB — resized automatically. Animated GIF and SVG up to 2 MB, saved as-is.'}
+              </small>
             </label>
 
             <div className="imgadd-or">or</div>
@@ -154,7 +215,7 @@ export default function ImageAddModal({ onAdd, onClose }) {
               </div>
             </label>
 
-            <p className="imgadd-hint">Once added, drag the image anywhere on the page. Publish to save.</p>
+            <p className="imgadd-hint">Once added, drag the image anywhere on the page, and drag its bottom-right corner to resize. Publish to save.</p>
           </>
         ) : (
           <>
@@ -171,12 +232,14 @@ export default function ImageAddModal({ onAdd, onClose }) {
                 <button className="imgadd-add" onClick={addUrl} disabled={!url.trim()}>Add</button>
               </div>
               <small>
-                YouTube or Vimeo links play in an embedded player (an “unlisted” YouTube
-                upload works well). A direct .mp4 link plays in the browser’s own player.
+                Any YouTube address works — watch, youtu.be, Shorts, live, or a playlist —
+                and so does any Vimeo one, including unlisted links. They play in an
+                embedded player (an “unlisted” YouTube upload works well). A direct link to
+                a video file (.mp4, .webm, .mov) plays in the browser’s own player.
               </small>
             </label>
 
-            <p className="imgadd-hint">Once added, drag the video by its top bar to place it. Publish to save.</p>
+            <p className="imgadd-hint">Once added, drag the video by its top bar to place it, and drag its bottom-right corner to resize. Publish to save.</p>
           </>
         )}
       </div>
