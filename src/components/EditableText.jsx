@@ -25,6 +25,8 @@ import './EditableText.css'
 //
 // Props:
 //   field       — site_content key (e.g. "home_headline")
+//                 Also set as data-anchor on the element, which the
+//                 ImageLayer uses to keep images beside this block.
 //   value       — the currently-saved copy from useSiteContent
 //   as          — HTML tag to render as when not editing (default 'span')
 //   multiline   — allow paragraphs / block formats (headings, lists,
@@ -322,7 +324,7 @@ export default function EditableText({
 
   if (!isAdmin || !enabled) {
     return (
-      <Tag className={`${blockClass} ${className}`.trim()} style={sizeStyle} onClick={onDisplayClick}>
+      <Tag data-anchor={field} className={`${blockClass} ${className}`.trim()} style={sizeStyle} onClick={onDisplayClick}>
         {body || placeholder}
       </Tag>
     )
@@ -432,6 +434,7 @@ export default function EditableText({
     return (
       <div
         ref={wrapRef}
+        data-anchor={field}
         className={`editable-editor ${multiline ? 'editable-editor-multi' : 'editable-editor-single'} ${className}`.trim()}
         style={editorStyle}
         // Wrapping <Link>/<NavLink>/<a> ancestors must not navigate
@@ -455,6 +458,7 @@ export default function EditableText({
   return (
     <Tag
       ref={displayRef}
+      data-anchor={field}
       className={`editable ${blockClass} ${isDirty ? 'editable-dirty' : ''} ${className}`}
       style={sizeStyle}
       tabIndex={0}
