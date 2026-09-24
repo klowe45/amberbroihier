@@ -6,6 +6,15 @@
     <meta name="description" content="Amber Broihier — speaker, writer, and communicator. Book Amber, read her latest work, and watch recent talks." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Amber Broihier</title>
+    <!-- The page can't render its real copy until GET /api/content returns, and
+         that's a different origin — so pay the DNS + TLS cost now, in parallel
+         with the bundle, instead of after it. Vite substitutes the env value at
+         build time. -->
+    <link rel="preconnect" href="https://amberbroihier-api.onrender.com" crossorigin />
+    <link rel="dns-prefetch" href="https://amberbroihier-api.onrender.com" />
+    <!-- Amber's theme picks Google-hosted fonts; warm that connection too. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Start Single Page Apps for GitHub Pages -->
     <script type="text/javascript">
       // https://github.com/rafgraph/spa-github-pages
@@ -22,8 +31,9 @@
       }(window.location))
     </script>
     <!-- End Single Page Apps for GitHub Pages -->
-    <script type="module" crossorigin src="/assets/index-jfndKnX4.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BGgkJUWv.css">
+    <script type="module" crossorigin src="/assets/index-BkKQsiWx.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-CSKPaITW.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-iaNegTww.css">
   </head>
   <body>
     <div id="root"></div>
