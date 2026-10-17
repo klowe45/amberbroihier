@@ -30,6 +30,9 @@ const HISTORY_LIMIT = 100
 // same `ab-draft:` prefix as useDraft so every persisted-draft-thing
 // lives in one bucket, easy to eyeball or wipe if needed.
 const PENDING_STORAGE_KEY = 'ab-draft:inline-edits'
+// Bumped on every successful Publish so other windows (the phone preview)
+// re-fetch the saved copy.
+const PUBLISHED_STORAGE_KEY = 'ab-draft:published'
 
 function loadPending() {
   if (typeof window === 'undefined') return {}
@@ -154,6 +157,21 @@ export function EditProvider({ children }) {
   // saves directly to /api/content (bypassing the pending-edit publish path).
   const refresh = useCallback(() => setPublishTick((n) => n + 1), [])
 
+  // Keep other windows of the site in step — the phone preview shows edits as
+  // Amber makes them and picks up a Publish. ('storage' only fires in the
+  // windows that didn't make the change.)
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === PENDING_STORAGE_KEY) {
+        try { setPending(e.newValue ? JSON.parse(e.newValue) : {}) } catch { /* ignore */ }
+      } else if (e.key === PUBLISHED_STORAGE_KEY) {
+        setPublishTick((n) => n + 1)
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   const publish = useCallback(async () => {
     const entries = Object.entries(pending).map(([key, value]) => ({
       key,
@@ -183,6 +201,7 @@ export function EditProvider({ children }) {
         })
       }
       setPublishTick((n) => n + 1)
+      try { window.localStorage.setItem(PUBLISHED_STORAGE_KEY, String(Date.now())) } catch { /* ignore */ }
     } catch (err) {
       // Keep the pending buffer — nothing is lost, she can retry once the
       // cause is gone. Just make sure she knows it did NOT save.

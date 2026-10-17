@@ -244,7 +244,8 @@ export async function remember(key, list, entry) {
 // wrapper if it has one, minus its pencil/resize/placeholder chrome.
 function renderedMap(el) {
   const root = el.querySelector(':scope > .rich-text') ?? el
-  return textMap(root, (n) => n.getAttribute('aria-hidden') === 'true' || /\beditable-/.test(n.className))
+  return textMap(root, (n) =>
+    n.getAttribute('aria-hidden') === 'true' || /\b(editable-|phone-img-host)/.test(n.className))
 }
 
 // A Range over the flagged characters inside the element with

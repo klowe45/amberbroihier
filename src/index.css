@@ -11,6 +11,13 @@
 :root {
   --fluid-t: clamp(0px, calc((100vw - 375px) / 705), 1px);
   --u: calc(0.6px + 0.4 * var(--fluid-t));
+  /* The most extra space Amber's drag-to-space gaps may add (Adjustable).
+     Desktop: no limit. Phones: big gaps were usually made to sit beside a
+     picture, which phones put in the text flow instead, so they're capped. */
+  --space-cap: 100vh;
+}
+@media (max-width: 640px) {
+  :root { --space-cap: 40px; }
 }
 
 :root {

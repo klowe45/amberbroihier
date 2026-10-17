@@ -80,7 +80,9 @@ export default function Adjustable({ id, content = {}, step = 8, grip = true, cl
   // Both are desktop px scaled by --u (index.css), so the space Amber set
   // shrinks in proportion with the text on a narrower screen.
   const style = {}
-  if (gap) style.marginTop = `calc(${gap} * var(--u))`
+  // Phones cap the gap (--space-cap, index.css): big desktop gaps were
+  // usually room for a picture that phones put in the text instead.
+  if (gap) style.marginTop = `min(calc(${gap} * var(--u)), var(--space-cap))`
   if (shift) style.left = `calc(${shift} * var(--u))`
 
   return (

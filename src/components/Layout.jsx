@@ -18,6 +18,7 @@ import PageContextMenu from './PageContextMenu.jsx'
 import UnderConstruction from './UnderConstruction.jsx'
 import ProofreadSpot from './ProofreadSpot.jsx'
 import ContactLink from './ContactLink.jsx'
+import PhonePreview from './PhonePreview.jsx'
 import { parseSocials, platformById, isSafeUrl } from '../lib/socials.js'
 import { stripHtml } from '../lib/richTextView.js'
 import './Layout.css'
@@ -378,6 +379,7 @@ export default function Layout() {
             {/* Edit toggle lives inside the nav so CSS order can put
                 it flush-left on desktop (order: -1) but let it flow
                 after Admin on mobile (no order override). */}
+            {isAdmin && <PhonePreview />}
             {isAdmin && (
               <EditModeToggle
                 active={navEditMode}

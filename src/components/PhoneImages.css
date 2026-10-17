@@ -1,0 +1,69 @@
+/* Images placed in the text flow on phones (see PhoneImages.jsx). The host is
+   an ordinary block so a floated figure inside it still wraps the
+   paragraphs that follow. */
+.phone-img {
+  position: relative;
+  margin: 0.4rem 0 1rem;
+}
+.phone-img img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.phone-img.is-full {
+  clear: both;
+  width: 100%;
+}
+.phone-img.is-wrap.is-left {
+  float: left;
+  clear: left; /* a second image on the same side goes below, not beside */
+  margin: 0.3rem 1rem 0.6rem 0;
+}
+.phone-img.is-wrap.is-right {
+  float: right;
+  clear: right;
+  margin: 0.3rem 0 0.6rem 1rem;
+}
+/* Whatever follows a run of wrapped text starts clear of the image. */
+@media (max-width: 640px) {
+  .rich-text::after,
+  .post-body::after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+}
+
+/* "On phones" picker: on every image for Amber (desktop images show it on
+   hover; on a phone it sits on the image). */
+.phone-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.35rem;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  color: #fff;
+  background: rgba(40, 53, 31, 0.88);
+  border-radius: 3px;
+}
+.phone-mode select {
+  font-size: 0.7rem;
+  padding: 0 0.1rem;
+  border: none;
+  border-radius: 2px;
+  background: #fff;
+  color: var(--text);
+}
+.phone-img-mode {
+  position: absolute;
+  left: 0.3rem;
+  bottom: 0.3rem;
+}
+/* A decoration with no text beside it: small and centred on its own line. */
+.phone-img.is-center {
+  clear: both;
+  margin-left: auto;
+  margin-right: auto;
+}

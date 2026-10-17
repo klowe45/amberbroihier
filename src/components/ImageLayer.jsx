@@ -2,6 +2,8 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { useEdit } from '../lib/EditContext.jsx'
 import { isVideoFileUrl } from '../lib/embedUrl.js'
+import PhoneImages, { PhoneModeSelect } from './PhoneImages.jsx'
+import { phoneLayout, hasPhoneSpot } from '../lib/phoneLayout.js'
 import './ImageLayer.css'
 
 // Free-positioned images Amber can drag ANYWHERE over the page — with SEPARATE
@@ -24,6 +26,10 @@ import './ImageLayer.css'
 //   at/off — where vertically relative to that block: 'in' = fraction of the
 //            block's height, 'after' = px below its bottom, 'before' = px
 //            above its top.
+// On phones, an image with no mobile placement of its own isn't drawn here at
+// all: PhoneImages puts it in the text flow instead (wrapped or full width,
+// per its `phone` setting), so it can never cover the copy.
+//
 // x/y/w (and mx/my/mw) are still written, as absolute px, for the fallback
 // when the anchor block isn't on the page. Images saved before `rel` existed
 // keep their old placement until Amber next moves or resizes them.
@@ -134,6 +140,21 @@ export default function ImageLayer({ page, content = {} }) {
   if (!images.length && !isAdmin) return null
 
   const g = layerEl ? measure(layerEl) : null
+  const colMax = g?.max ?? 1080
+
+  // On phones, an image without a phone spot of its own goes into the text
+  // flow (PhoneImages) instead of floating over the copy; the layer keeps only
+  // the ones Amber dragged to a spot on a phone. "Hide" drops it either way.
+  const hiddenOnPhone = (img) => phoneLayout(img, colMax).mode === 'hide'
+  const inFlow = isMobile ? images.filter((img) => !hasPhoneSpot(img) && !hiddenOnPhone(img)) : []
+  const onLayer = isMobile ? images.filter((img) => hasPhoneSpot(img) && !hiddenOnPhone(img)) : images
+  const setPhone = (id, mode) =>
+    set(listKey, JSON.stringify(images.map((im) => {
+      if (im.id !== id) return im
+      // eslint-disable-next-line no-unused-vars
+      const { phone, ...rest } = im
+      return mode === 'auto' ? rest : { ...rest, phone: mode }
+    })))
 
   // Absolute box for the current view.
   const posFor = (img) => {
@@ -226,7 +247,11 @@ export default function ImageLayer({ page, content = {} }) {
 
   return (
     <div ref={setLayerEl} className={`image-layer${isAdmin ? ' is-admin' : ''}`}>
-      {g && images.map((img) => {
+      {isMobile && (
+        <PhoneImages images={inFlow} scope={layerEl?.parentElement} colMax={colMax}
+          isAdmin={isAdmin} onSetPhone={setPhone} />
+      )}
+      {g && onLayer.map((img) => {
         const p = liveOf(img)
         return (
           <figure
@@ -270,6 +295,9 @@ export default function ImageLayer({ page, content = {} }) {
             {isAdmin && (
               <>
                 <span className="image-view-badge">{isMobile ? 'Mobile' : 'Desktop'}</span>
+                {!isMobile && (
+                  <PhoneModeSelect value={img.phone} onChange={(v) => setPhone(img.id, v)} className="image-phone-mode" />
+                )}
                 <button
                   type="button"
                   className="image-remove"

@@ -150,3 +150,14 @@
 .image-layer.is-admin .image-item:hover .image-view-badge {
   display: inline-block;
 }
+
+/* "On phones" picker on a desktop image — appears on hover, admin only. */
+.image-phone-mode {
+  position: absolute;
+  left: 0.3rem;
+  bottom: 0.3rem;
+  display: none;
+}
+.image-layer.is-admin .image-item:hover .image-phone-mode {
+  display: inline-flex;
+}
