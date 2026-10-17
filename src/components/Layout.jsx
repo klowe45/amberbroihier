@@ -17,6 +17,7 @@ import SocialIcon from './SocialIcon.jsx'
 import PageContextMenu from './PageContextMenu.jsx'
 import UnderConstruction from './UnderConstruction.jsx'
 import ProofreadSpot from './ProofreadSpot.jsx'
+import ContactLink from './ContactLink.jsx'
 import { parseSocials, platformById, isSafeUrl } from '../lib/socials.js'
 import { stripHtml } from '../lib/richTextView.js'
 import './Layout.css'
@@ -196,12 +197,7 @@ export default function Layout() {
           </ul>
         )}
         <p className="footer-links">
-          <a href={`mailto:${content.footer_contact_email}`}>
-            <EditableText
-              field="footer_contact_label"
-              value={content.footer_contact_label}
-            />
-          </a>
+          <ContactLink email={content.footer_contact_email} label={content.footer_contact_label} />
           <span aria-hidden="true"> · </span>
           {/* Auth control lives here (not the nav) so the header
               stays clean. Sign in for anonymous visitors flips to

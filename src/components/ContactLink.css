@@ -1,0 +1,49 @@
+.contact-link {
+  position: relative;
+}
+
+/* Opens upward: the footer is fixed to the bottom of the screen. */
+.contact-pop {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.75rem);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 0.8rem 0.9rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  white-space: normal;
+  text-align: left;
+}
+.contact-pop-email {
+  color: var(--text);
+  font-size: 0.95rem;
+  user-select: all;
+}
+.contact-pop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.contact-pop-btn {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--bg-alt);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.footer-links a.contact-pop-btn {
+  color: var(--text);
+}
+.contact-pop-btn:hover,
+.footer-links a.contact-pop-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
