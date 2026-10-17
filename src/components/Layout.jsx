@@ -15,6 +15,7 @@ import ImageLayer from './ImageLayer.jsx'
 import Analytics from './Analytics.jsx'
 import SocialIcon from './SocialIcon.jsx'
 import PageContextMenu from './PageContextMenu.jsx'
+import UnderConstruction from './UnderConstruction.jsx'
 import { parseSocials, platformById, isSafeUrl } from '../lib/socials.js'
 import './Layout.css'
 
@@ -31,8 +32,8 @@ const NAV_FALLBACK = {
 }
 
 export default function Layout() {
-  const { user, isAdmin, signOut } = useAuth()
-  const { content } = useSiteContent(NAV_FALLBACK)
+  const { user, isAdmin, signOut, loading: authLoading } = useAuth()
+  const { content, loading: contentLoading } = useSiteContent(NAV_FALLBACK)
   const { pending, set, refresh } = useEdit()
   // Nav labels default to plain navigation. Amber opts in to editing
   // them by clicking the pencil toggle to the left of the nav — the
@@ -160,6 +161,71 @@ export default function Layout() {
   // Apply Amber's saved colors + fonts site-wide once the content loads
   // (and again whenever it changes after a publish).
   useEffect(() => { applyTheme(content) }, [content])
+
+  // Shared by the normal site and the under-construction sign, so socials
+  // and Sign in stay reachable while the site is hidden.
+  const footer = (
+    <footer className="site-footer">
+      <div className="container site-footer-inner">
+        {socials.length > 0 && (
+          <ul className="footer-socials" aria-label="Social links">
+            {socials.map((s) => (
+              <li key={s.id}>
+                <a
+                  href={s.url}
+                  target={s.url.startsWith('mailto:') ? undefined : '_blank'}
+                  rel="noopener noreferrer"
+                  aria-label={platformById(s.platform)?.label || s.platform}
+                  title={platformById(s.platform)?.label || s.platform}
+                >
+                  <SocialIcon platform={s.platform} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="footer-links">
+          <a href={`mailto:${content.footer_contact_email}`}>
+            <EditableText
+              field="footer_contact_label"
+              value={content.footer_contact_label}
+            />
+          </a>
+          <span aria-hidden="true"> · </span>
+          {/* Auth control lives here (not the nav) so the header
+              stays clean. Sign in for anonymous visitors flips to
+              Sign out once Amber's authenticated. */}
+          {user ? (
+            <button className="link-btn" onClick={() => signOut()}>
+              Sign out
+            </button>
+          ) : (
+            <Link to="/login">Sign in</Link>
+          )}
+        </p>
+      </div>
+    </footer>
+  )
+
+  // Under construction (Admin → site status): visitors get the sign and the
+  // footer instead of the site. Render nothing until the switch's value is
+  // known so the real pages never flash first, and while it's on, wait for
+  // the auth check too so Amber doesn't see the sign flash before her session
+  // is recognized. /login stays reachable so she can sign in and switch it off.
+  const lockable = !isAdmin && pathname !== '/login'
+  if (lockable && contentLoading) return null
+  if (lockable && content.site_under_construction === '1') {
+    if (authLoading) return null
+    return (
+      <div className="site">
+        <div className="site-frame" aria-hidden="true" />
+        <main className="site-main">
+          <UnderConstruction brand={content.brand} />
+        </main>
+        {footer}
+      </div>
+    )
+  }
 
   return (
     <div className="site">
@@ -356,46 +422,7 @@ export default function Layout() {
         <ImageAddModal onAdd={addImage} onClose={() => setAddImageOpen(false)} />
       )}
 
-      <footer className="site-footer">
-        <div className="container site-footer-inner">
-          {socials.length > 0 && (
-            <ul className="footer-socials" aria-label="Social links">
-              {socials.map((s) => (
-                <li key={s.id}>
-                  <a
-                    href={s.url}
-                    target={s.url.startsWith('mailto:') ? undefined : '_blank'}
-                    rel="noopener noreferrer"
-                    aria-label={platformById(s.platform)?.label || s.platform}
-                    title={platformById(s.platform)?.label || s.platform}
-                  >
-                    <SocialIcon platform={s.platform} />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="footer-links">
-            <a href={`mailto:${content.footer_contact_email}`}>
-              <EditableText
-                field="footer_contact_label"
-                value={content.footer_contact_label}
-              />
-            </a>
-            <span aria-hidden="true"> · </span>
-            {/* Auth control lives here (not the nav) so the header
-                stays clean. Sign in for anonymous visitors flips to
-                Sign out once Amber's authenticated. */}
-            {user ? (
-              <button className="link-btn" onClick={() => signOut()}>
-                Sign out
-              </button>
-            ) : (
-              <Link to="/login">Sign in</Link>
-            )}
-          </p>
-        </div>
-      </footer>
+      {footer}
     </div>
   )
 }

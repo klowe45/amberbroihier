@@ -8,6 +8,7 @@ import BookingInbox from './admin/BookingInbox.jsx'
 import AnalyticsPanel from './admin/AnalyticsPanel.jsx'
 import SocialsManager from './admin/SocialsManager.jsx'
 import WaiverInbox from './admin/WaiverInbox.jsx'
+import SiteStatus from './admin/SiteStatus.jsx'
 import './Admin.css'
 import { stripHtml } from '../lib/richTextView.js'
 
@@ -47,9 +48,12 @@ export default function Admin() {
         <h1>
           <EditableText field="admin_headline" value={content.admin_headline} />
         </h1>
-        <p className="admin-subtitle">
-          <EditableText field="admin_subtitle" value={content.admin_subtitle} />
-        </p>
+        <div className="admin-subtitle-row">
+          <p className="admin-subtitle">
+            <EditableText field="admin_subtitle" value={content.admin_subtitle} />
+          </p>
+          <SiteStatus value={content.site_under_construction} />
+        </div>
       </header>
 
       <nav className="admin-tabs" aria-label="Admin sections">
