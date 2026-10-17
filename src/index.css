@@ -176,3 +176,38 @@ select {
   color: var(--text-muted);
   margin-bottom: 1rem;
 }
+
+/* Form fields — shared by the login, inquiry, booking and waiver forms.
+   Global (not in Login.css) because Login is lazy-loaded: its CSS never
+   reaches visitors who don't open /login. */
+.field {
+  display: block;
+  margin-bottom: 1.25rem;
+}
+.field span {
+  display: block;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-size: 1rem;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.field textarea {
+  resize: vertical;
+}
