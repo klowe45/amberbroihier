@@ -2,7 +2,6 @@ import { useSiteContent } from '../lib/useSiteContent.js'
 import EditableText from '../components/EditableText.jsx'
 import Adjustable from '../components/Adjustable.jsx'
 import WaiverForm from '../components/WaiverForm.jsx'
-import { stripHtml } from '../lib/richTextView.js'
 import './Waivers.css'
 
 // Waivers. Same shape as Prices / Retreats: intro copy plus one big
@@ -66,7 +65,7 @@ export default function Waivers() {
       </Adjustable>
 
       <Adjustable id="waivers_form" content={content}>
-      <WaiverForm waiverText={stripHtml(content.waivers_body)} />
+      <WaiverForm waiverHtml={content.waivers_body} />
       </Adjustable>
     </div>
   )

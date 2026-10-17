@@ -15,9 +15,10 @@ const BLANK = {
 
 // Sign the waiver: name, email (optional), a typed signature, and an
 // explicit opt-in / opt-out choice. Stored on the backend; Amber reads
-// them in Admin → Waivers. The waiver wording shown is sent along so
-// the record can prove which version was signed.
-export default function WaiverForm({ waiverText }) {
+// them in Admin → Waivers. The waiver wording shown is sent along so the
+// server can record exactly which version was signed (and refuse if it has
+// changed since the page loaded).
+export default function WaiverForm({ waiverHtml }) {
   const [values, setValues, clearDraft] = useDraft('waiver-form', BLANK)
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState(null)
@@ -38,7 +39,7 @@ export default function WaiverForm({ waiverText }) {
         email: values.email,
         signature: values.signature,
         agreed: values.choice === 'agree',
-        waiver_text: waiverText,
+        waiver_html: waiverHtml,
         website: values.website,
       })
       trackSubmit('waiver')

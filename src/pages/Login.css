@@ -12,12 +12,6 @@
   padding: 2.5rem;
 }
 
-.form-error {
-  color: var(--danger);
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-}
-
 /* Password field with an eye toggle. Wraps the input so the icon
    sits absolutely inside it, without interfering with the input's
    own focus ring. */

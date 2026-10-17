@@ -215,6 +215,11 @@ select {
 .field textarea {
   resize: vertical;
 }
+.form-error {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
 
 /* Small outlined button. Global (not in Admin.css, which is lazy-loaded)
    because the public Speaking page uses it for Amber's Edit/Remove. */
