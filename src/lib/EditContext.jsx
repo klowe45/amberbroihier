@@ -161,11 +161,24 @@ export function EditProvider({ children }) {
     setPublishError('')
     try {
       await api.put('/api/content', { entries })
-      setPending({})
-      // Published edits are in the DB now; undo can't take those back.
-      undoStack.current = []
-      redoStack.current = []
-      setHistoryTick((n) => n + 1)
+      if (pendingRef.current === pending) {
+        setPending({})
+        // Published edits are in the DB now; undo can't take those back.
+        undoStack.current = []
+        redoStack.current = []
+        setHistoryTick((n) => n + 1)
+      } else {
+        // She kept editing while the request was in flight. Drop only what
+        // was sent and is still unchanged; newer edits (and their undo
+        // history) stay pending for the next Publish.
+        setPending((prev) => {
+          const next = { ...prev }
+          for (const { key, value } of entries) {
+            if (next[key] === value) delete next[key]
+          }
+          return next
+        })
+      }
       setPublishTick((n) => n + 1)
     } catch (err) {
       // Keep the pending buffer — nothing is lost, she can retry once the
