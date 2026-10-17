@@ -1,5 +1,5 @@
 # Render's free plan sleeps the API after ~15 min idle, and the first visit
-# after that waits 30–60s for it to wake (showing fallback copy meanwhile).
+# after that waits 30–60s for it to wake (page body stays empty meanwhile).
 # Pinging every 10 min keeps it warm. Lives in this public repo because
 # public-repo Actions minutes are free; /api/health doesn't touch the DB,
 # so Neon still auto-suspends.

@@ -208,13 +208,14 @@ export default function Layout() {
   )
 
   // Under construction (Admin → site status): visitors get the sign and the
-  // footer instead of the site. Render nothing until the switch's value is
-  // known so the real pages never flash first, and while it's on, wait for
-  // the auth check too so Amber doesn't see the sign flash before her session
-  // is recognized. /login stays reachable so she can sign in and switch it off.
+  // footer instead of the site. Until the switch's value is known the header
+  // and footer render but the page body stays empty, so neither the real
+  // pages nor the fallback copy flash first. While it's on, wait for the auth
+  // check too so Amber doesn't see the sign flash before her session is
+  // recognized. /login stays reachable so she can sign in and switch it off.
   const lockable = !isAdmin && pathname !== '/login'
-  if (lockable && contentLoading) return null
-  if (lockable && content.site_under_construction === '1') {
+  const awaitingStatus = lockable && contentLoading
+  if (lockable && !contentLoading && content.site_under_construction === '1') {
     if (authLoading) return null
     return (
       <div className="site">
@@ -409,10 +410,14 @@ export default function Layout() {
             it contains) are code-split, so a visitor never downloads them.
             The fallback is deliberately empty — the chunk is a few KB from the
             same origin, and a spinner would flash. */}
-        <Suspense fallback={null}>
-          <Outlet />
-        </Suspense>
-        {pageKey && <ImageLayer page={pageKey} content={content} />}
+        {!awaitingStatus && (
+          <>
+            <Suspense fallback={null}>
+              <Outlet />
+            </Suspense>
+            {pageKey && <ImageLayer page={pageKey} content={content} />}
+          </>
+        )}
         {isAdmin && pageKey && (
           <PageContextMenu pageKey={pageKey} onAddMedia={() => setAddImageOpen(true)} />
         )}
