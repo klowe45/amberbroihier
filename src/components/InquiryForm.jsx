@@ -146,7 +146,7 @@ export default function InquiryForm() {
       </label>
 
       {status && (
-        <p className={`booking-status ${status.kind}`}>{status.text}</p>
+        <p className={`booking-status ${status.kind}`} role="status">{status.text}</p>
       )}
 
       <button className="btn" type="submit" disabled={submitting}>

@@ -118,7 +118,7 @@ export default function WaiverForm({ waiverText }) {
         <input type="text" tabIndex="-1" autoComplete="off" value={values.website} onChange={onChange('website')} />
       </label>
 
-      {status && <p className={`booking-status ${status.kind}`}>{status.text}</p>}
+      {status && <p className={`booking-status ${status.kind}`} role="status">{status.text}</p>}
 
       <button className="btn" type="submit" disabled={submitting}>
         {submitting ? 'Submitting…' : 'Submit waiver'}

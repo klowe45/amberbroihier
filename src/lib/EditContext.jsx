@@ -1,5 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from './api.js'
+import { useAuth } from './AuthContext.jsx'
+
+const NO_EDITS = {}
 
 // Tracks Amber's pending inline edits to site_content. Buffered client-
 // side so she can preview freely; a single PUT /api/content commits the
@@ -223,9 +226,14 @@ export function EditProvider({ children }) {
     return () => window.removeEventListener('beforeunload', handler)
   }, [isDirty])
 
+  // Unpublished edits are Amber's preview only. They stay saved in this
+  // browser, but once she's signed out nobody using it sees them as if live.
+  const { isAdmin } = useAuth()
+  const visiblePending = isAdmin ? pending : NO_EDITS
+
   const value = useMemo(
-    () => ({ pending, isDirty, publishing, publishTick, publishError, dismissPublishError, canUndo, canRedo, set, undo, redo, publish, cancel, refresh }),
-    [pending, isDirty, publishing, publishTick, publishError, dismissPublishError, canUndo, canRedo, set, undo, redo, publish, cancel, refresh]
+    () => ({ pending: visiblePending, isDirty: isAdmin && isDirty, publishing, publishTick, publishError, dismissPublishError, canUndo, canRedo, set, undo, redo, publish, cancel, refresh }),
+    [visiblePending, isAdmin, isDirty, publishing, publishTick, publishError, dismissPublishError, canUndo, canRedo, set, undo, redo, publish, cancel, refresh]
   )
 
   return <EditContext.Provider value={value}>{children}</EditContext.Provider>
