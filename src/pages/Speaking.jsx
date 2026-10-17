@@ -122,10 +122,10 @@ function VideoCard({ video, isAdmin, onEdit, onDelete }) {
           />
         </div>
       )}
-      <h3 className="video-title">{video.title}</h3>
+      <h3 className="video-title" data-anchor={`video_${video.id}_title`}>{video.title}</h3>
       <div className="video-meta">
         {video.description ? (
-          <p className="video-desc">{video.description}</p>
+          <p className="video-desc" data-anchor={`video_${video.id}_description`}>{video.description}</p>
         ) : (
           <span />
         )}

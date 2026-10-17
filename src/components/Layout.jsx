@@ -16,6 +16,7 @@ import Analytics from './Analytics.jsx'
 import SocialIcon from './SocialIcon.jsx'
 import PageContextMenu from './PageContextMenu.jsx'
 import UnderConstruction from './UnderConstruction.jsx'
+import ProofreadSpot from './ProofreadSpot.jsx'
 import { parseSocials, platformById, isSafeUrl } from '../lib/socials.js'
 import { stripHtml } from '../lib/richTextView.js'
 import './Layout.css'
@@ -432,6 +433,8 @@ export default function Layout() {
           <PageContextMenu pageKey={pageKey} onAddMedia={() => setAddImageOpen(true)} />
         )}
       </main>
+
+      {isAdmin && <ProofreadSpot />}
 
       {isAdmin && addImageOpen && (
         <ImageAddModal onAdd={addImage} onClose={() => setAddImageOpen(false)} />

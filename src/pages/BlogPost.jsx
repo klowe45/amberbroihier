@@ -101,7 +101,7 @@ export default function BlogPost() {
   return (
     <article className="container post prose">
       <p className="eyebrow">Writing</p>
-      <h1>{post.title}</h1>
+      <h1 data-anchor={`post_${post.id}_title`}>{post.title}</h1>
       {post.published_at && (
         <time className="post-date">
           {new Date(post.published_at).toLocaleDateString(undefined, {
@@ -113,6 +113,7 @@ export default function BlogPost() {
       )}
       <div
         className="post-body"
+        data-anchor={`post_${post.id}_body`}
         dangerouslySetInnerHTML={{ __html: sanitizedBody }}
       />
       <Link to="/blog" className="post-back">← Back to writing</Link>

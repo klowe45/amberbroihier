@@ -9,6 +9,7 @@ import AnalyticsPanel from './admin/AnalyticsPanel.jsx'
 import SocialsManager from './admin/SocialsManager.jsx'
 import WaiverInbox from './admin/WaiverInbox.jsx'
 import SiteStatus from './admin/SiteStatus.jsx'
+import ProofreadPanel from './admin/ProofreadPanel.jsx'
 import './Admin.css'
 import { stripHtml } from '../lib/richTextView.js'
 
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'waivers', label: 'Waivers' },
   { id: 'socials', label: 'Socials' },
   { id: 'analytics', label: 'Analytics' },
+  { id: 'proofread', label: 'Proofread' },
 ]
 
 const FALLBACK = {
@@ -37,7 +39,10 @@ export default function Admin() {
   // mind. Detect that here and jump straight to the Videos tab; the
   // VideoManager receives the id as a prop and auto-opens the form.
   const editVideoId = location.state?.editVideoId ?? null
-  const [tab, setTab] = useState(editVideoId ? 'videos' : 'bookings')
+  // Proofread's "Back to the list" (and similar) can ask for a tab.
+  const [tab, setTab] = useState(
+    editVideoId ? 'videos' : TABS.some((t) => t.id === location.state?.tab) ? location.state.tab : 'bookings'
+  )
 
   return (
     <div className="container admin">
@@ -75,6 +80,7 @@ export default function Admin() {
         {tab === 'waivers' && <WaiverInbox />}
         {tab === 'socials' && <SocialsManager />}
         {tab === 'analytics' && <AnalyticsPanel />}
+        {tab === 'proofread' && <ProofreadPanel />}
       </section>
     </div>
   )

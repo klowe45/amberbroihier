@@ -61,7 +61,7 @@ export default function Blog() {
                   </time>
                 )}
                 {p.excerpt && (
-                  <p className="post-list-excerpt">{p.excerpt}</p>
+                  <p className="post-list-excerpt" data-anchor={`post_${p.id}_excerpt`}>{p.excerpt}</p>
                 )}
               </Link>
             </li>
