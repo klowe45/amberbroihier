@@ -12,6 +12,10 @@ const isSpelling = (i) => i.issueType === 'misspelling'
 // only these can go in the dictionary.
 const isUnknownWord = (i) => i.ruleId.startsWith('MORFOLOGIK')
 
+// Words that are always right on this site, on top of whatever Amber adds to
+// the dictionary herself.
+const KNOWN_WORDS = ['Broihier']
+
 // Admin → Proofread: scan every page, post and video for possible typos and
 // grammar issues. Each one can be fixed from here with a suggestion, opened on
 // its page (highlighted) to look at or fix by hand, ignored, or — for a word
@@ -29,7 +33,7 @@ export default function ProofreadPanel() {
   const rerender = () => setTick((n) => n + 1)
 
   const ignored = readList(content, 'proofread_ignored')
-  const dictionary = readList(content, 'proofread_dictionary').map((w) => w.toLowerCase())
+  const dictionary = [...KNOWN_WORDS, ...readList(content, 'proofread_dictionary')].map((w) => w.toLowerCase())
   const open = scan.issues.filter(
     (i) =>
       !ignored.includes(ignoreSignature(i)) &&
@@ -104,8 +108,10 @@ export default function ProofreadPanel() {
   return (
     <div className="proofread">
       <div className="proofread-bar">
-        <button type="button" className="btn" onClick={startScan} disabled={busy}>
-          {busy ? 'Scanning…' : scan.at ? 'Scan again' : 'Scan site for typos'}
+        <button type="button" className="btn proofread-scan" onClick={startScan} disabled={busy} aria-busy={busy}>
+          {busy ? (
+            <><span className="proofread-spinner" aria-hidden="true" />Scanning…</>
+          ) : scan.at ? 'Scan again' : 'Scan site for typos'}
         </button>
         {scan.at && (
           <span className="proofread-summary">

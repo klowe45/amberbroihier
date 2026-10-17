@@ -5,6 +5,30 @@
   flex-wrap: wrap;
   margin-bottom: 1rem;
 }
+/* Scan button: a spinner while the scan runs, so it doesn't look stuck. */
+.proofread-scan {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.proofread-scan:disabled {
+  opacity: 0.85;
+}
+.proofread-spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: proofread-spin 0.75s linear infinite;
+}
+@keyframes proofread-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .proofread-spinner { animation-duration: 2.5s; }
+}
+
 .proofread-summary,
 .proofread-help {
   color: var(--text-muted);
