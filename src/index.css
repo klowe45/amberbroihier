@@ -159,6 +159,10 @@ select {
   color: var(--bg);
   border-bottom-color: var(--accent-hover);
 }
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 .btn-ghost {
   background: transparent;
   color: var(--accent);
@@ -210,4 +214,24 @@ select {
 }
 .field textarea {
   resize: vertical;
+}
+
+/* Small outlined button. Global (not in Admin.css, which is lazy-loaded)
+   because the public Speaking page uses it for Amber's Edit/Remove. */
+.text-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text);
+  border-radius: 2px;
+}
+.text-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.text-btn.danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
 }

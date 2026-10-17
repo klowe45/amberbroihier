@@ -91,10 +91,6 @@
   font-size: 0.85rem;
   color: var(--text-muted);
 }
-.btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
 
 @media (max-width: 640px) {
   .socials-item {
