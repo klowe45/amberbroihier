@@ -5,12 +5,15 @@
 
 const BASE = import.meta.env.VITE_API_BASE_URL || ''
 
+// A Blob/File body is sent raw with its own type (image uploads); anything
+// else is JSON.
 async function request(method, path, body) {
+  const raw = body instanceof Blob
   const res = await fetch(`${BASE}${path}`, {
     method,
     credentials: 'include',
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
+    headers: body ? { 'Content-Type': raw ? body.type : 'application/json' } : undefined,
+    body: body ? (raw ? body : JSON.stringify(body)) : undefined,
   })
   if (!res.ok) {
     let msg = `Request failed (${res.status})`

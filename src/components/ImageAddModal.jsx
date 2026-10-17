@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { api } from '../lib/api.js'
 import { toEmbedUrl, isVideoFileUrl, isKnownVideoHost } from '../lib/embedUrl.js'
 import './ImageAddModal.css'
 
 // Small modal for adding an image or a video to the current page.
-//   Image: paste a URL or upload a file (read as a data URL so it needs no
-//          separate file storage).
+//   Image: paste a URL or upload a file (uploaded to image storage via
+//          POST /api/uploads; the page stores only the returned URL).
 //   Video: paste a YouTube / Vimeo link (embedded player) or a direct link
 //          to a video file (.mp4 / .webm / .mov). Video FILES aren't uploaded
 //          — a real video inlined as base64 would ride along in every
@@ -12,17 +13,12 @@ import './ImageAddModal.css'
 // onAdd is called with { type: 'image' | 'video', src }; the caller places
 // it on the page.
 
-// Every image on a page is stored inline as a base64 data URL inside one
-// `images_<page>` row, and the whole row is re-sent on every Publish — so an
-// upload is downscaled to what a web page actually needs before it ever
-// enters the payload. Because of that we can accept a straight-off-the-phone
-// photo: 100 MB in, a couple hundred KB out.
+// Photos are downscaled to what a web page actually needs before upload, so a
+// straight-off-the-phone photo is fine: 100 MB in, a couple hundred KB out.
 const MAX_BYTES = 100 * 1024 * 1024
 
 // GIF (animation) and SVG (vector) would be ruined by a canvas round-trip, so
-// they go in untouched — which means they need a tighter cap is
-// really the backend's: 100 MB is ~133 MB once base64'd, which is what the
-// /api/content body limit is sized for.
+// they're uploaded untouched, up to the backend's 100 MB upload limit.
 const MAX_PASSTHROUGH_BYTES = 100 * 1024 * 1024
 const passThrough = (type) => type === 'image/gif' || type === 'image/svg+xml'
 
@@ -45,22 +41,24 @@ const loadImage = (src) =>
     img.src = src
   })
 
+const toBlob = (canvas, type, quality) =>
+  new Promise((resolve) => canvas.toBlob(resolve, type, quality))
+
 // Encode the canvas, keeping transparency when the source had any. JPEG can't
 // hold an alpha channel — a logo with a transparent background would come out
 // on a white box — so anything that isn't already a JPEG is encoded as WebP,
 // falling back to PNG on browsers whose canvas won't write WebP.
-function encode(canvas, sourceType) {
+async function encode(canvas, sourceType) {
   if (sourceType === 'image/jpeg' || sourceType === 'image/jpg') {
-    return canvas.toDataURL('image/jpeg', QUALITY)
+    return toBlob(canvas, 'image/jpeg', QUALITY)
   }
-  const webp = canvas.toDataURL('image/webp', QUALITY)
-  return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/png')
+  const webp = await toBlob(canvas, 'image/webp', QUALITY)
+  return webp?.type === 'image/webp' ? webp : toBlob(canvas, 'image/png')
 }
 
-// Returns a data URL no larger than simply inlining the original file.
-async function toStoredDataUrl(file) {
-  const original = await readAsDataUrl(file)
-  const img = await loadImage(original)
+// Returns an image Blob no larger than the original file.
+async function toUploadBlob(file) {
+  const img = await loadImage(await readAsDataUrl(file))
 
   const scale = Math.min(1, MAX_EDGE / Math.max(img.naturalWidth, img.naturalHeight))
   const canvas = document.createElement('canvas')
@@ -69,11 +67,14 @@ async function toStoredDataUrl(file) {
   const ctx = canvas.getContext('2d')
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-  const encoded = encode(canvas, file.type)
+  const encoded = await encode(canvas, file.type)
   // Re-encoding a small, already-optimised file can make it bigger. Keep
-  // whichever is smaller.
-  return encoded.length < original.length ? encoded : original
+  // whichever is smaller (HEIC has no web type, so it always re-encodes).
+  const keepOriginal = encoded.size >= file.size && /^image\/(jpeg|png|webp|avif)$/.test(file.type)
+  return keepOriginal ? file : encoded
 }
+
+const upload = async (blob) => (await api.post('/api/uploads', blob)).url
 
 export default function ImageAddModal({ onAdd, onClose }) {
   const [kind, setKind] = useState('image')
@@ -110,15 +111,21 @@ export default function ImageAddModal({ onAdd, onClose }) {
           )
           return
         }
-        onAdd({ type: 'image', src: await readAsDataUrl(file) })
+        onAdd({ type: 'image', src: await upload(file) })
         return
       }
       if (file.size > MAX_BYTES) {
         setError('That image is over 100 MB. Please use a smaller one, or paste a hosted image link instead.')
         return
       }
-      onAdd({ type: 'image', src: await toStoredDataUrl(file) })
-    } catch {
+      onAdd({ type: 'image', src: await upload(await toUploadBlob(file)) })
+    } catch (err) {
+      // A request that reached the API failed there (session expired, too
+      // large…) — say what it said rather than blaming the file.
+      if (err?.status) {
+        setError(`Upload failed: ${err.message}`)
+        return
+      }
       // Chrome and Firefox can't decode HEIC/HEIF — the format iPhones shoot
       // by default. Tell her what to actually do about it.
       if (/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name || '')) {
@@ -194,8 +201,8 @@ export default function ImageAddModal({ onAdd, onClose }) {
               <input type="file" accept="image/*,.heic,.heif" onChange={onFile} disabled={busy} />
               <small>
                 {busy
-                  ? 'Preparing your image…'
-                  : 'PNG, JPG, WebP, AVIF or HEIC up to 12 MB — resized automatically. Animated GIF and SVG up to 2 MB, saved as-is.'}
+                  ? 'Uploading your image…'
+                  : 'PNG, JPG, WebP, AVIF or HEIC up to 100 MB — resized automatically. Animated GIF and SVG up to 100 MB, saved as-is.'}
               </small>
             </label>
 
