@@ -45,6 +45,11 @@ export default function BlogPost() {
       })
   }, [slug])
 
+  // Layout titles the other pages; posts name themselves.
+  useEffect(() => {
+    if (post?.title) document.title = `${post.title} · Amber Broihier`
+  }, [post])
+
   // Sanitize once per body change. Two fallbacks:
   //   1. Pre-Quill posts stored plain text — wrap paragraphs in <p>
   //      so spacing survives.

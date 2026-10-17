@@ -17,6 +17,7 @@ import SocialIcon from './SocialIcon.jsx'
 import PageContextMenu from './PageContextMenu.jsx'
 import UnderConstruction from './UnderConstruction.jsx'
 import { parseSocials, platformById, isSafeUrl } from '../lib/socials.js'
+import { stripHtml } from '../lib/richTextView.js'
 import './Layout.css'
 
 const genImgId = () =>
@@ -161,6 +162,15 @@ export default function Layout() {
   // Apply Amber's saved colors + fonts site-wide once the content loads
   // (and again whenever it changes after a publish).
   useEffect(() => { applyTheme(content) }, [content])
+
+  // Browser tab / bookmark / analytics title: Amber's label for the page
+  // ("Inquiry · Amber Broihier"). Blog posts set their own in BlogPost.
+  useEffect(() => {
+    if (pathname.startsWith('/blog/')) return
+    const page = NAV_PAGES.find((p) => p.path === pathname && p.path !== '/')
+    const label = page && (stripHtml(content[page.key]).trim() || page.fallback)
+    document.title = label ? `${label} · Amber Broihier` : 'Amber Broihier'
+  }, [pathname, content])
 
   // Shared by the normal site and the under-construction sign, so socials
   // and Sign in stay reachable while the site is hidden.
